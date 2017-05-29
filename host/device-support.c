@@ -64,6 +64,7 @@ static void displayCoreMessage(int, struct core_ctrl*);
 static void raiseError(int, struct core_ctrl*);
 static void stringConcatenate(int, struct core_ctrl*);
 static void inputCoreMessage(int, struct core_ctrl*);
+static void remoteP2P(int, struct core_ctrl*);
 static void performMathsOp(struct core_ctrl*);
 static int getTypeOfInput(char*);
 static char* getEpiphanyExecutableFile(struct interpreterconfiguration*);
@@ -168,6 +169,9 @@ static void checkStatusFlagsOfCore(struct shared_basic * basicState, struct inte
 			updateCoreWithComplete=1;
 		} else if (basicState->core_ctrl[coreId].core_command == 4) {
 			stringConcatenate(coreId, &basicState->core_ctrl[coreId]);
+			updateCoreWithComplete=1;
+		} else if (basicState->core_ctrl[coreId].core_command == 5) {
+			remoteP2P(coreId, &basicState->core_ctrl[coreId]);
 			updateCoreWithComplete=1;
 		} else if (basicState->core_ctrl[coreId].core_command >= 1000) {
 			performMathsOp(&basicState->core_ctrl[coreId]);
@@ -571,4 +575,13 @@ static void timeval_subtract(struct timeval *result, struct timeval *x,  struct 
      tv_usec is certainly positive. */
   result->tv_sec = x->tv_sec - y->tv_sec;
   result->tv_usec = x->tv_usec - y->tv_usec;
+}
+
+/**
+ * Provisional remote point-to-point communication function
+ */
+static void remoteP2P(int sourceId, struct core_ctrl * info) {
+	int dest;
+	memcpy(&dest, &(info->data[0]), sizeof(int));
+	printf("Sending message form local core%d to remote core%d via host\n", sourceId, dest);
 }
