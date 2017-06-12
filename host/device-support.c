@@ -586,10 +586,8 @@ static void timeval_subtract(struct timeval *result, struct timeval *x,  struct 
  */
 static void remoteP2P_Send(int sourceId, struct core_ctrl * info) {
 	int dest;
-	int value;
 	memcpy(&dest, &(info->data[0]), sizeof(int));
-	memcpy(&value, &(info->data[6]), sizeof(int));
-	printf("Sending message(value:%d) form local core%d to remote core%d via host\n", value, sourceId, dest);
+	printf("Sending message form local core%d to remote core%d via host\n", sourceId, dest);
 }
 
 /**
