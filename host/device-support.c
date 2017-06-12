@@ -64,7 +64,8 @@ static void displayCoreMessage(int, struct core_ctrl*);
 static void raiseError(int, struct core_ctrl*);
 static void stringConcatenate(int, struct core_ctrl*);
 static void inputCoreMessage(int, struct core_ctrl*);
-static void remoteP2P(int, struct core_ctrl*);
+static void remoteP2P_Send(int, struct core_ctrl*);
+static void remoteP2P_Recv(int, struct core_ctrl*);
 static void performMathsOp(struct core_ctrl*);
 static int getTypeOfInput(char*);
 static char* getEpiphanyExecutableFile(struct interpreterconfiguration*);
@@ -171,7 +172,10 @@ static void checkStatusFlagsOfCore(struct shared_basic * basicState, struct inte
 			stringConcatenate(coreId, &basicState->core_ctrl[coreId]);
 			updateCoreWithComplete=1;
 		} else if (basicState->core_ctrl[coreId].core_command == 5) {
-			remoteP2P(coreId, &basicState->core_ctrl[coreId]);
+			remoteP2P_Send(coreId, &basicState->core_ctrl[coreId]);
+			updateCoreWithComplete=1;
+		} else if (basicState->core_ctrl[coreId].core_command == 6) {
+			remoteP2P_Recv(coreId, &basicState->core_ctrl[coreId]);
 			updateCoreWithComplete=1;
 		} else if (basicState->core_ctrl[coreId].core_command >= 1000) {
 			performMathsOp(&basicState->core_ctrl[coreId]);
@@ -578,10 +582,21 @@ static void timeval_subtract(struct timeval *result, struct timeval *x,  struct 
 }
 
 /**
- * Provisional remote point-to-point communication function
+ * Provisional remote point-to-point communication function: SEND
  */
-static void remoteP2P(int sourceId, struct core_ctrl * info) {
+static void remoteP2P_Send(int sourceId, struct core_ctrl * info) {
 	int dest;
+	int value;
 	memcpy(&dest, &(info->data[0]), sizeof(int));
-	printf("Sending message form local core%d to remote core%d via host\n", sourceId, dest);
+	memcpy(&value, &(info->data[6]), sizeof(int));
+	printf("Sending message(value:%d) form local core%d to remote core%d via host\n", value, sourceId, dest);
+}
+
+/**
+ * Provisional remote point-to-point communication function: RECV
+ */
+static void remoteP2P_Recv(int destId, struct core_ctrl * info) {
+	int source;
+	memcpy(&source, &(info->data[0]), sizeof(int));
+	printf("Sending message form romote core%d to local core%d via host\n", source, destId);
 }
