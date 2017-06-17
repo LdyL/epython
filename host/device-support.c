@@ -584,17 +584,22 @@ static void timeval_subtract(struct timeval *result, struct timeval *x,  struct 
 /**
  * Provisional remote point-to-point communication function: SEND
  */
-static void remoteP2P_Send(int sourceId, struct core_ctrl * info) {
+static void __attribute__((optimize("O0"))) remoteP2P_Send(int sourceId, struct core_ctrl * info) {
 	int dest;
+	int val;
 	memcpy(&dest, &(info->data[0]), sizeof(int));
-	printf("Sending message from local core%d to remote core%d via host\n", sourceId, dest);
+	memcpy(&val, &(info->data[6]), sizeof(int));
+	printf("Sending message[value:%d] from local core%d to remote core%d via host\n", val, sourceId, dest);
 }
 
 /**
  * Provisional remote point-to-point communication function: RECV
  */
-static void remoteP2P_Recv(int destId, struct core_ctrl * info) {
+static void __attribute__((optimize("O0"))) remoteP2P_Recv(int destId, struct core_ctrl * info) {
 	int source;
+	int dummy=123;
 	memcpy(&source, &(info->data[0]), sizeof(int));
-	printf("Sending message from romote core%d to local core%d via host\n", source, destId);
+	memcpy(&(info->data[6]), &dummy, sizeof(int));
+	printf("Sending message[dummy int:%d] from romote core%d to local core%d via host\n",dummy, source, destId);
+
 }
