@@ -142,9 +142,29 @@ void callNativeFunction(struct value_defn * value, unsigned char fnIdentifier, i
     } else if (fnIdentifier==NATIVE_FN_RTL_NUMCORES || fnIdentifier==NATIVE_FN_RTL_COREID) {
         if (numArgs != 0) raiseError(ERR_INCORRECT_NUM_NATIVE_PARAMS);
         value->type=INT_TYPE;
-		value->dtype=SCALAR;
-        if (fnIdentifier==NATIVE_FN_RTL_NUMCORES) cpy(value->data, &numActiveCores, sizeof(int));
-        if (fnIdentifier==NATIVE_FN_RTL_COREID) cpy(value->data, &localCoreId, sizeof(int));
+		    value->dtype=SCALAR;
+        if (fnIdentifier==NATIVE_FN_RTL_NUMCORES) {
+          int numCoresGlobal;
+          numCoresGlobal = NN*numActiveCores;
+          cpy(value->data, &numActiveCores, sizeof(int));
+        }
+        if (fnIdentifier==NATIVE_FN_RTL_COREID) {
+          int globalCoreId;
+          globalCoreId = NID*numActiveCores+localCoreId;
+          cpy(value->data, &globalCoreId, sizeof(int));
+        }
+    } else if (fnIdentifier==NATIVE_FN_RTL_NUMNODES || fnIdentifier==NATIVE_FN_RTL_NODEID) {
+        if (numArgs != 0) raiseError(ERR_INCORRECT_NUM_NATIVE_PARAMS);
+        value->type=INT_TYPE;
+        value->dtype=SCALAR;
+        if (fnIdentifier==NATIVE_FN_RTL_NUMNODES) {
+          int numNodes = NN; //NN(No. of Nodes) is an compile-time variable
+          cpy(value->data, &numNodes, sizeof(int));
+        }
+        if (fnIdentifier==NATIVE_FN_RTL_NODEID) {
+          int nodeId = NID; //NID(Node Id) is an compile-time variable
+          cpy(value->data, &nodeId, sizeof(int));
+        }
     } else if (fnIdentifier==NATIVE_FN_RTL_REDUCE) {
         if (numArgs != 2) raiseError(ERR_INCORRECT_NUM_NATIVE_PARAMS);
         *value=reduceData(parameters[0], getInt(parameters[1].data), numActiveCores);

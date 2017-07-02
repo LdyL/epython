@@ -69,6 +69,12 @@ def coreid():
 def numcores():
 	return native rtl_numcores()
 
+def nodeid():
+	return native rtl_nodeid()
+
+def numnodes():
+	return native rtl_numnodes()
+
 def ishost():
 	return native rtl_ishost()
 

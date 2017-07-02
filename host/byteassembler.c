@@ -156,6 +156,10 @@ struct memorycontainer* appendNativeCallFunctionStatement(char* functionName, st
         position=appendStatement(memoryContainer, NATIVE_FN_RTL_NUMCORES, position);
     } else if (strcmp(functionName, NATIVE_RTL_COREID_STR)==0) {
         position=appendStatement(memoryContainer, NATIVE_FN_RTL_COREID, position);
+		} else if (strcmp(functionName, NATIVE_RTL_NUMNODES_STR)==0) {
+				position=appendStatement(memoryContainer, NATIVE_FN_RTL_NUMNODES, position);
+		} else if (strcmp(functionName, NATIVE_RTL_NODEID_STR)==0) {
+				position=appendStatement(memoryContainer, NATIVE_FN_RTL_NODEID, position);
     } else if (strcmp(functionName, NATIVE_RTL_REDUCE_STR)==0) {
         position=appendStatement(memoryContainer, NATIVE_FN_RTL_REDUCE, position);
     } else if (strcmp(functionName, NATIVE_RTL_ALLOCATEARRAY_STR)==0) {

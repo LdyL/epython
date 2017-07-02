@@ -46,6 +46,8 @@
 #define NATIVE_RTL_BCAST_STR "rtl_bcast"
 #define NATIVE_RTL_NUMCORES_STR "rtl_numcores"
 #define NATIVE_RTL_COREID_STR "rtl_coreid"
+#define NATIVE_RTL_NUMCORES_STR "rtl_numnodes"
+#define NATIVE_RTL_COREID_STR "rtl_nodeid"
 #define NATIVE_RTL_REDUCE_STR "rtl_reduce"
 #define NATIVE_RTL_ALLOCATEARRAY_STR "rtl_allocatearray"
 #define NATIVE_RTL_ALLOCATESHAREDARRAY_STR "rtl_allocatesharedarray"

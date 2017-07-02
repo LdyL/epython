@@ -1,4 +1,6 @@
-CFLAGS := -O3 -DHOST_INTERPRETER -Wall -Wextra -Wno-unused-parameter -Wmissing-prototypes -std=c99 -I ../interpreter
+PARALLELLA_ID = ${NODE_ID}
+NUM_PARALLELLAS = ${NUM_NODES}
+CFLAGS := -O3 -DHOST_INTERPRETER -Wall -Wextra -Wno-unused-parameter -Wmissing-prototypes -std=c99 -I ../interpreter -D NID=$(PARALLELLA_ID) -D NN=$(NUM_PARALLELLAS)
 OBJECTS := lexer.o parser.o main.o memorymanager.o byteassembler.o stack.o misc.o configuration.o ../interpreter/interpreter.o host-functions.o python_interoperability.o
 
 LIBS=-lm -lpthread
@@ -8,7 +10,7 @@ CFLAGS+= -DHOST_STANDALONE
 else
 CFLAGS+= -I../ -I ${EPIPHANY_HOME}/tools/host/include -D__HOST__ -Dasm=__asm__ -Drestrict=
 OBJECTS+=device-support.o
-CC=arm-linux-gnueabihf-gcc
+CC=mpicc
 LDFLAGS=-L ${EPIPHANY_HOME}/tools/host/lib
 LIBS+=-le-hal -lrt
 ifneq (,$(wildcard ${EPIPHANY_HOME}/tools/host/lib/libe-loader.so))
