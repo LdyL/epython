@@ -2,6 +2,9 @@ prefix ?= /usr
 bindir = $(prefix)/bin
 includedir = $(prefix)/include
 
+export PARALLELLA_ID = ${NODE_ID}
+export NUM_PARALLELLAS = ${NUM_NODES}
+
 all: epiphany
 
 standalone: clean
@@ -23,13 +26,13 @@ host-build:
 host-full:
 	@cd host; $(MAKE) full
 	@mv host/epython-host .
-	
-device-build:	
+
+device-build:
 	@cd device; $(MAKE)
 	@mv device/epython-device.srec .
 	@mv device/epython-device.elf .
 
-clean: 
+clean:
 	@cd interpreter; rm -f *.o *.d
 	@cd host; $(MAKE) clean
 	@cd device; $(MAKE) clean
