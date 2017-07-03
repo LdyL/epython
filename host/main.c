@@ -31,6 +31,7 @@
 #include <pthread.h>
 #include <unistd.h>
 #include <sys/types.h>
+#include <mpi.h>
 
 #include "stack.h"
 #include "ctype.h"
@@ -45,8 +46,6 @@
 #include "shared.h"
 #include "device-support.h"
 #endif
-
-#include "mpi.h"
 
 // Wrapper for the context which is passed into a thread
 struct hostRunningThreadWrapper {
