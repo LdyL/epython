@@ -593,7 +593,7 @@ static void __attribute__((optimize("O0"))) remoteP2P_Send(int sourceId, struct 
 	int sendbuf[3];
 	sourceId_global = TOTAL_CORES*NID + sourceId;
 
-	MPI_COMM_rank(MPI_COMM_WORLD, &myid);
+	MPI_Comm_rank(MPI_COMM_WORLD, &myid);
 
 	//retrieve data from Epiphany
 	memcpy(&dest, &(info->data[0]), sizeof(int));
@@ -617,7 +617,7 @@ static void __attribute__((optimize("O0"))) remoteP2P_Recv(int destId, struct co
 	int recvbuf[3];
 	MPI_Status status;
 
-	MPI_COMM_rank(MPI_COMM_WORLD, &myid);
+	MPI_Comm_rank(MPI_COMM_WORLD, &myid);
 
 	//receive data from other Parallellas
 	memcpy(&source, &(info->data[0]), sizeof(int));
