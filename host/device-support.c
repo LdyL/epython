@@ -635,5 +635,5 @@ static void __attribute__((optimize("O0"))) remoteP2P_Recv(int destId, struct co
 static int resolveRank(int id) {
 	int rank;
 	rank = (id+1)/TOTAL_CORES;
-	return
+	return rank;
 }
