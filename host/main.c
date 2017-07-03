@@ -46,6 +46,8 @@
 #include "device-support.h"
 #endif
 
+#include "mpi.h"
+
 // Wrapper for the context which is passed into a thread
 struct hostRunningThreadWrapper {
 	char * assembledCode;
@@ -91,6 +93,7 @@ static void* runCodeOnEpiphany(void*);
  * Host program entry point, bootstraps reading configuration, lexing & parsing (if applicable) and running the code
  */
 int main (int argc, char *argv[]) {
+	MPI_Init(&argc, &argv);
 	srand((unsigned) time(NULL) * getpid());
 	struct interpreterconfiguration* configuration=readConfiguration(argc, argv);
 	if (configuration->filename != NULL) {
@@ -137,6 +140,7 @@ int main (int argc, char *argv[]) {
 	}
 	free(configuration->intentActive);
 	free(configuration);
+	MPI_Finalize();
 	return 0;
 }
 

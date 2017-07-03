@@ -59,6 +59,7 @@ static char isMemoryAddressFound(char*, int, struct symbol_node*);
 static void performGC(int, struct symbol_node*, char);
 static struct value_defn performMathsOp(int, struct value_defn);
 static int getLargestCoreId(int);
+static int isLocal(int);
 static struct value_defn probeForMessage(int);
 static struct value_defn test_or_wait_for_sent_message(int, char);
 
@@ -634,8 +635,8 @@ void clearFreedStackFrames(char* targetPointer) {
  */
 static void sendData(struct value_defn to_send, int target, char blocking) {
 	if (to_send.type == STRING_TYPE) raiseError(ERR_ONLY_SEND_INT_AND_REAL);
-	if (target < getLargestCoreId(target)) {
-		sendDataToDeviceCore(to_send, target, blocking);
+	if (isLocal(target)) {
+		sendDataToDeviceCore(to_send, target-NID*getLargestCoreId(target), blocking);
 	} else {
 	    if (!blocking) raiseError(ERR_NBSEND_NOT_SUPPORTED);
 		sendDataToHostProcess(to_send, target);
@@ -707,7 +708,7 @@ static int getLargestCoreId(int source) {
 				if (sharedData->core_ctrl[i].active) largestCoreId=i+1;
 			}
 		} else {
-			raiseError(ERR_RECV_FROM_UNKNOWN_CORE);
+			if(source >= NN*largestCoreId) raiseError(ERR_RECV_FROM_UNKNOWN_CORE);
 		}
 	}
 	return largestCoreId;
@@ -730,8 +731,8 @@ static struct value_defn probeForMessage(int source) {
 }
 
 static struct value_defn recvData(int source) {
-	if (source < getLargestCoreId(source)) {
-		return recvDataFromDeviceCore(source);
+	if (isLocal(source)) {
+		return recvDataFromDeviceCore(source-NID*getLargestCoreId(source));
 	} else {
 		return recvDataFromHostProcess(source);
 	}
@@ -780,8 +781,8 @@ static struct value_defn recvDataFromDeviceCore(int source) {
  */
 static struct value_defn sendRecvData(struct value_defn to_send, int target) {
 	if (to_send.type == STRING_TYPE) raiseError(ERR_ONLY_SEND_INT_AND_REAL);
-	if (target < getLargestCoreId(target)) {
-		return sendRecvDataWithDeviceCore(to_send, target);
+	if (isLocal(target)) {
+		return sendRecvDataWithDeviceCore(to_send, target-NID*getLargestCoreId(target));
 	} else {
 		return sendRecvDataWithHostProcess(to_send, target);
 	}
@@ -991,4 +992,13 @@ static int stringCmp(char * str1, char * str2) {
 		if (str1[i] != str2[i]) return 0;
 	}
 	return 1;
+}
+
+static int isLocal(int id) {
+  int localNumCores = getLargestCoreId(id);
+  if(NID*localNumCores <= id && id < (NID+1)*localNumCores) {
+    return 1;
+  }else{
+    return 0;
+  }
 }
