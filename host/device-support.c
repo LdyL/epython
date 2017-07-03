@@ -615,7 +615,7 @@ static void __attribute__((optimize("O0"))) remoteP2P_Recv(int destId, struct co
 	int var;
 	int myid;
 	int recvbuf[3];
-	int destId_global = TOTAL_CORES*NID + destId_global;
+	int destId_global = TOTAL_CORES*NID + destId;
 	MPI_Status status;
 
 	MPI_Comm_rank(MPI_COMM_WORLD, &myid);
