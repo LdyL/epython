@@ -615,6 +615,7 @@ static void __attribute__((optimize("O0"))) remoteP2P_Recv(int destId, struct co
 	int var;
 	int myid;
 	int recvbuf[3];
+	destId_global = TOTAL_CORES*NID + destId_global;
 	MPI_Status status;
 
 	MPI_Comm_rank(MPI_COMM_WORLD, &myid);
@@ -623,7 +624,7 @@ static void __attribute__((optimize("O0"))) remoteP2P_Recv(int destId, struct co
 	memcpy(&source, &(info->data[0]), sizeof(int));
 	MPI_Recv(recvbuf, 3, MPI_INT, resolveRank(source), source, MPI_COMM_WORLD, &status);
 	memcpy(&var, &recvbuf[1], sizeof(int));
-	printf("Receiving message[int:%d] from romote core%d to local core%d via host node%d\n",var, source, destId, myid);
+	printf("Receiving message[int:%d] from romote core%d to local core%d via host node%d\n",var, source, destId_global, myid);
 
 	//hand the received data to Epiphany
 	memcpy(&(info->data[6]), &var, sizeof(int));
