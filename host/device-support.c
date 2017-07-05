@@ -184,7 +184,7 @@ static void checkStatusFlagsOfCore(struct shared_basic * basicState, struct inte
 			remoteP2P_Send(coreId, basicState);
 			updateCoreWithComplete=1;
 		} else if (basicState->core_ctrl[coreId].core_command == 6) {
-			remoteP2P_Recv(coreId, &basicState->core_ctrl[coreId]);
+			remoteP2P_Recv(coreId, basicState);
 			updateCoreWithComplete=1;
 		} else if (basicState->core_ctrl[coreId].core_command >= 1000) {
 			performMathsOp(&basicState->core_ctrl[coreId]);
