@@ -65,8 +65,8 @@ static void displayCoreMessage(int, struct core_ctrl*);
 static void raiseError(int, struct core_ctrl*);
 static void stringConcatenate(int, struct core_ctrl*);
 static void inputCoreMessage(int, struct core_ctrl*);
-static void remoteP2P_Send(int, struct core_ctrl*);
-static void remoteP2P_Recv(int, struct core_ctrl*);
+static void remoteP2P_Send(int, struct shared_basic*);
+static void remoteP2P_Recv(int, struct shared_basic*);
 static void performMathsOp(struct core_ctrl*);
 static int getTypeOfInput(char*);
 static int resolveRank(int);
@@ -81,6 +81,7 @@ static char * allocateChunkInSharedHeapMemory(size_t, struct core_ctrl *);
 struct shared_basic * loadCodeOntoEpiphany(struct interpreterconfiguration* configuration) {
 	struct shared_basic * basicCode;
 	int i, result, codeOnCore=0;
+	int cluster_num_node, my_node_id;
 	e_set_host_verbosity(H_D0);
 	result = e_init(NULL);
 	if (result == E_ERR) fprintf(stderr, "Error on initialisation\n");
@@ -110,6 +111,12 @@ struct shared_basic * loadCodeOntoEpiphany(struct interpreterconfiguration* conf
 	basicCode->codeOnCores=codeOnCore==1;
 	basicCode->num_procs=configuration->coreProcs+configuration->hostProcs;
 	basicCode->baseHostPid=configuration->coreProcs;
+
+	//Assign Nunber of Nodes and Node ID to the current copy of ePyhton based on MPI size and rank
+	MPI_Comm_size(MPI_COMM_WORLD, &cluster_num_node);
+	MPI_Comm_rank(MPI_COMM_WORLD, &my_node_id);
+	basicCode->num_nodes=cluster_num_node;
+	basicCode->nodeId=my_node_id;
 
 	initialiseCores(basicCode, codeOnCore, configuration);
 	placeByteCode(basicCode, codeOnCore, configuration->intentActive);
@@ -174,7 +181,7 @@ static void checkStatusFlagsOfCore(struct shared_basic * basicState, struct inte
 			stringConcatenate(coreId, &basicState->core_ctrl[coreId]);
 			updateCoreWithComplete=1;
 		} else if (basicState->core_ctrl[coreId].core_command == 5) {
-			remoteP2P_Send(coreId, &basicState->core_ctrl[coreId]);
+			remoteP2P_Send(coreId, basicState);
 			updateCoreWithComplete=1;
 		} else if (basicState->core_ctrl[coreId].core_command == 6) {
 			remoteP2P_Recv(coreId, &basicState->core_ctrl[coreId]);
@@ -586,18 +593,18 @@ static void timeval_subtract(struct timeval *result, struct timeval *x,  struct 
 /**
  * Provisional remote point-to-point communication function: SEND
  */
-static void __attribute__((optimize("O0"))) remoteP2P_Send(int sourceId, struct core_ctrl * info) {
+static void __attribute__((optimize("O0"))) remoteP2P_Send(int sourceId, struct shared_basic * info) {
 	int dest, sourceId_global;
 	int val;
 	int myid;
 	int sendbuf[3];
-	sourceId_global = TOTAL_CORES*NID + sourceId;
+	sourceId_global = TOTAL_CORES*info->nodeId + sourceId;
 
 	MPI_Comm_rank(MPI_COMM_WORLD, &myid);
 
 	//retrieve data from Epiphany
-	memcpy(&dest, &(info->data[0]), sizeof(int));
-	memcpy(&val, &(info->data[6]), sizeof(int));
+	memcpy(&dest, &(info->core_ctrl[sourceId].data[0]), sizeof(int));
+	memcpy(&val, &(info->core_ctrl[sourceId].data[6]), sizeof(int));
 
 	//send data to another Parallella
 	memcpy(&sendbuf[0], &dest, sizeof(int));
@@ -610,24 +617,24 @@ static void __attribute__((optimize("O0"))) remoteP2P_Send(int sourceId, struct 
 /**
  * Provisional remote point-to-point communication function: RECV
  */
-static void __attribute__((optimize("O0"))) remoteP2P_Recv(int destId, struct core_ctrl * info) {
+static void __attribute__((optimize("O0"))) remoteP2P_Recv(int destId, struct shared_basic * info) {
 	int source;
 	int var;
 	int myid;
 	int recvbuf[3];
-	int destId_global = TOTAL_CORES*NID + destId;
+	int destId_global = TOTAL_CORES*info->nodeId + destId;
 	MPI_Status status;
 
 	MPI_Comm_rank(MPI_COMM_WORLD, &myid);
 
 	//receive data from other Parallellas
-	memcpy(&source, &(info->data[0]), sizeof(int));
+	memcpy(&source, &(info->core_ctrl[destId].data[0]), sizeof(int));
 	MPI_Recv(recvbuf, 3, MPI_INT, resolveRank(source), source, MPI_COMM_WORLD, &status);
 	memcpy(&var, &recvbuf[1], sizeof(int));
 	printf("Receiving message[int:%d] from romote core%d to local core%d via host node%d\n",var, source, destId_global, myid);
 
 	//hand the received data to Epiphany
-	memcpy(&(info->data[6]), &var, sizeof(int));
+	memcpy(&(info->core_ctrl[destId].data[6]), &var, sizeof(int));
 }
 
 /**

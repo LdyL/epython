@@ -1,4 +1,4 @@
-CFLAGS := -O3 -DHOST_INTERPRETER -Wall -Wextra -Wno-unused-parameter -Wmissing-prototypes -std=c99 -I ../interpreter -D NID=$(PARALLELLA_ID) -D NN=$(NUM_PARALLELLAS)
+CFLAGS := -O3 -DHOST_INTERPRETER -Wall -Wextra -Wno-unused-parameter -Wmissing-prototypes -std=c99 -I ../interpreter
 OBJECTS := lexer.o parser.o main.o memorymanager.o byteassembler.o stack.o misc.o configuration.o ../interpreter/interpreter.o host-functions.o python_interoperability.o
 
 LIBS=-lm -lpthread

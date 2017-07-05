@@ -146,12 +146,12 @@ void callNativeFunction(struct value_defn * value, unsigned char fnIdentifier, i
 		    value->dtype=SCALAR;
         if (fnIdentifier==NATIVE_FN_RTL_NUMCORES) {
           int numCoresGlobal;
-          numCoresGlobal = NN*numActiveCores;
-          cpy(value->data, &numActiveCores, sizeof(int));
+          numCoresGlobal = numActiveCores*sharedData->num_nodes;
+          cpy(value->data, &numCoresGlobal, sizeof(int));
         }
         if (fnIdentifier==NATIVE_FN_RTL_COREID) {
           int globalCoreId;
-          globalCoreId = NID*numActiveCores+localCoreId;
+          globalCoreId = localCoreId+numActiveCores*sharedData->nodeId;
           cpy(value->data, &globalCoreId, sizeof(int));
         }
     } else if (fnIdentifier==NATIVE_FN_RTL_NUMNODES || fnIdentifier==NATIVE_FN_RTL_NODEID) {
@@ -159,12 +159,12 @@ void callNativeFunction(struct value_defn * value, unsigned char fnIdentifier, i
         value->type=INT_TYPE;
         value->dtype=SCALAR;
         if (fnIdentifier==NATIVE_FN_RTL_NUMNODES) {
-          int numNodes = NN; //NN(No. of Nodes) is an compile-time variable
+          int numNodes = sharedData->num_nodes;
           cpy(value->data, &numNodes, sizeof(int));
         }
         if (fnIdentifier==NATIVE_FN_RTL_NODEID) {
-          int nodeId = NID; //NID(Node Id) is an compile-time variable
-          cpy(value->data, &nodeId, sizeof(int));
+          int myNodeId = sharedData->nodeId;
+          cpy(value->data, &myNodeId, sizeof(int));
         }
     } else if (fnIdentifier==NATIVE_FN_RTL_REDUCE) {
         if (numArgs != 2) raiseError(ERR_INCORRECT_NUM_NATIVE_PARAMS);
@@ -636,7 +636,7 @@ void clearFreedStackFrames(char* targetPointer) {
 static void sendData(struct value_defn to_send, int target, char blocking) {
 	if (to_send.type == STRING_TYPE) raiseError(ERR_ONLY_SEND_INT_AND_REAL);
 	if (isLocal(target)) {
-		sendDataToDeviceCore(to_send, target-NID*getLargestCoreId(target), blocking);
+		sendDataToDeviceCore(to_send, target-getLargestCoreId(target)*sharedData->nodeId, blocking);
 	} else {
 	    if (!blocking) raiseError(ERR_NBSEND_NOT_SUPPORTED);
 		sendDataToHostProcess(to_send, target);
@@ -701,6 +701,7 @@ static struct value_defn test_or_wait_for_sent_message(int target, char is_wait)
 
 static int getLargestCoreId(int source) {
     int largestCoreId=sharedData->baseHostPid;
+    int totalNodes=sharedData->num_nodes;
 	if (source >= sharedData->num_procs) {
 		if (source < TOTAL_CORES && sharedData->core_ctrl[source].active) {
 			int i;
@@ -708,7 +709,7 @@ static int getLargestCoreId(int source) {
 				if (sharedData->core_ctrl[i].active) largestCoreId=i+1;
 			}
 		} else {
-			if(source >= NN*largestCoreId) raiseError(ERR_RECV_FROM_UNKNOWN_CORE);
+			if(source >= totalNodes*largestCoreId) raiseError(ERR_RECV_FROM_UNKNOWN_CORE);
 		}
 	}
 	return largestCoreId;
@@ -732,7 +733,7 @@ static struct value_defn probeForMessage(int source) {
 
 static struct value_defn recvData(int source) {
 	if (isLocal(source)) {
-		return recvDataFromDeviceCore(source-NID*getLargestCoreId(source));
+		return recvDataFromDeviceCore(source-getLargestCoreId(source)*sharedData->nodeId);
 	} else {
 		return recvDataFromHostProcess(source);
 	}
@@ -782,7 +783,7 @@ static struct value_defn recvDataFromDeviceCore(int source) {
 static struct value_defn sendRecvData(struct value_defn to_send, int target) {
 	if (to_send.type == STRING_TYPE) raiseError(ERR_ONLY_SEND_INT_AND_REAL);
 	if (isLocal(target)) {
-		return sendRecvDataWithDeviceCore(to_send, target-NID*getLargestCoreId(target));
+		return sendRecvDataWithDeviceCore(to_send, target-getLargestCoreId(target)*sharedData->nodeId);
 	} else {
 		return sendRecvDataWithHostProcess(to_send, target);
 	}
@@ -996,7 +997,8 @@ static int stringCmp(char * str1, char * str2) {
 
 static int isLocal(int id) {
   int localNumCores = getLargestCoreId(id);
-  if(NID*localNumCores <= id && id < (NID+1)*localNumCores) {
+  int myNodeId = sharedData->nodeId;
+  if(myNodeId*localNumCores <= id && id < (myNodeId+1)*localNumCores) {
     return 1;
   }else{
     return 0;

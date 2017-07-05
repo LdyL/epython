@@ -1,5 +1,5 @@
 CC=e-gcc
-CFLAGS=-I ../ -I ../interpreter -Os -fno-exceptions -freg-struct-return -fno-default-inline -D NID=$(PARALLELLA_ID) -D NN=$(NUM_PARALLELLAS)
+CFLAGS=-I ../ -I ../interpreter -Os -fno-exceptions -freg-struct-return -fno-default-inline
 LDFLAGS=-T linker.ldf -Wl,--gc-sections
 
 all: clean epython-device.elf
