@@ -57,7 +57,7 @@ volatile unsigned int * pb;
 static void initialiseCores(struct shared_basic*, int, struct interpreterconfiguration*);
 static void loadBinaryInterpreterOntoCores(struct interpreterconfiguration*, char);
 static void placeByteCode(struct shared_basic*, int, char*);
-static void checkStatusFlagsOfCore(struct shared_basic*, struct interpreterconfiguration*, int, MPI_Request *, int *);
+static void checkStatusFlagsOfCore(struct shared_basic*, struct interpreterconfiguration*, int, MPI_Request *, int *, char *);
 static void deactivateCore(struct interpreterconfiguration*, int);
 static void startApplicableCores(struct shared_basic*, struct interpreterconfiguration*);
 static void timeval_subtract(struct timeval*, struct timeval*,  struct timeval*);
@@ -154,7 +154,7 @@ void finaliseCores(void) {
 void monitorCores(struct shared_basic * basicState, struct interpreterconfiguration* configuration) {
 	int i;
 	int commStatus[TOTAL_CORES]={0};
-	char Parallella_postbox[TOTAL_CORES*15]
+	char Parallella_postbox[TOTAL_CORES*15];
 	MPI_Request requests[TOTAL_CORES*2];
 
 	while (totalActive > 0) {
@@ -659,7 +659,7 @@ static void __attribute__((optimize("O0"))) remoteP2P_Recv(int destId, struct sh
 /**
  * Provisional remote point-to-point communication function: SEND AND RECV
  */
-static void __attribute__((optimize("O0"))) remoteP2P_SendRecv_Start(int callerId, struct shared_basic * info, MPI_Request *r_handles char *recvbuf) {
+static void __attribute__((optimize("O0"))) remoteP2P_SendRecv_Start(int callerId, struct shared_basic * info, MPI_Request *r_handles, char *recvbuf) {
 	int target;
 	int callerId_global = TOTAL_CORES*info->nodeId + callerId;
 
@@ -676,9 +676,7 @@ static void __attribute__((optimize("O0"))) remoteP2P_SendRecv_Start(int callerI
 }
 
 static void __attribute__((optimize("O0"))) remoteP2P_SendRecv_Finish(int callerId, struct shared_basic * info, char *recvbuf) {
-	int callerId_global = TOTAL_CORES*info->nodeId + callerId;
-
-	info->core_ctrl[callerId].data[10]=recvbuf[callerId*15+14]
+	info->core_ctrl[callerId].data[10]=recvbuf[callerId*15+14];
 	memcpy(&(info->core_ctrl[callerId].data[11]), recvbuf[callerId*15+4], sizeof(float));
 }
 
