@@ -57,7 +57,7 @@ volatile unsigned int * pb;
 static void initialiseCores(struct shared_basic*, int, struct interpreterconfiguration*);
 static void loadBinaryInterpreterOntoCores(struct interpreterconfiguration*, char);
 static void placeByteCode(struct shared_basic*, int, char*);
-static void checkStatusFlagsOfCore(struct shared_basic*, struct interpreterconfiguration*, int);
+static void checkStatusFlagsOfCore(struct shared_basic*, struct interpreterconfiguration*, int, MPI_Request *, int *);
 static void deactivateCore(struct interpreterconfiguration*, int);
 static void startApplicableCores(struct shared_basic*, struct interpreterconfiguration*);
 static void timeval_subtract(struct timeval*, struct timeval*,  struct timeval*);
@@ -67,6 +67,8 @@ static void stringConcatenate(int, struct core_ctrl*);
 static void inputCoreMessage(int, struct core_ctrl*);
 static void remoteP2P_Send(int, struct shared_basic*);
 static void remoteP2P_Recv(int, struct shared_basic*);
+static void remoteP2P_SendRecv_Start(int, struct shared_basic*, MPI_Request *, char *);
+static void remoteP2P_SendRecv_Finish(int, struct shared_basic*, char *);
 static void performMathsOp(struct core_ctrl*);
 static int getTypeOfInput(char*);
 static int resolveRank(int);
@@ -151,10 +153,14 @@ void finaliseCores(void) {
  */
 void monitorCores(struct shared_basic * basicState, struct interpreterconfiguration* configuration) {
 	int i;
+	int commStatus[TOTAL_CORES]={0};
+	char Parallella_postbox[TOTAL_CORES*15]
+	MPI_Request requests[TOTAL_CORES*2];
+
 	while (totalActive > 0) {
 		for (i=0;i<TOTAL_CORES;i++) {
 			if (active[i]) {
-				checkStatusFlagsOfCore(basicState, configuration, i);
+				checkStatusFlagsOfCore(basicState, configuration, i, requests, commStatus, Parallella_postbox);
 			}
 		}
 	}
@@ -163,7 +169,7 @@ void monitorCores(struct shared_basic * basicState, struct interpreterconfigurat
 /**
  * Checks whether the core has sent some command to the host and actions this command if so
  */
-static void checkStatusFlagsOfCore(struct shared_basic * basicState, struct interpreterconfiguration* configuration, int coreId) {
+static void checkStatusFlagsOfCore(struct shared_basic * basicState, struct interpreterconfiguration* configuration, int coreId, MPI_Request *reqs, int * interParallellaCommInProgress, char * postbox) {
 	char updateCoreWithComplete=0;
 	if (basicState->core_ctrl[coreId].core_busy == 0) {
 		if (basicState->core_ctrl[coreId].core_run == 0) {
@@ -186,6 +192,19 @@ static void checkStatusFlagsOfCore(struct shared_basic * basicState, struct inte
 		} else if (basicState->core_ctrl[coreId].core_command == 6) {
 			remoteP2P_Recv(coreId, basicState);
 			updateCoreWithComplete=1;
+		} else if (basicState->core_ctrl[coreId].core_command == 7) {
+			if (!interParallellaCommInProgress[coreId]) {
+				remoteP2P_SendRecv_Start(coreId, basicState, reqs, postbox);
+				interParallellaCommInProgress[coreId] = 1;
+			} else {
+				int flag;
+				MPI_Testall(2, &reqs[coreId*2], &flag, MPI_STATUS_IGNORE);
+				if (flag) {
+					remoteP2P_SendRecv_Finish(coreId, basicState, postbox);
+					interParallellaCommInProgress[coreId] = 0;
+					updateCoreWithComplete=1;
+				}
+			}
 		} else if (basicState->core_ctrl[coreId].core_command >= 1000) {
 			performMathsOp(&basicState->core_ctrl[coreId]);
 			updateCoreWithComplete=1;
@@ -635,6 +654,32 @@ static void __attribute__((optimize("O0"))) remoteP2P_Recv(int destId, struct sh
 
 	//hand the received data to Epiphany
 	memcpy(&(info->core_ctrl[destId].data[6]), &var, sizeof(int));
+}
+
+/**
+ * Provisional remote point-to-point communication function: SEND AND RECV
+ */
+static void __attribute__((optimize("O0"))) remoteP2P_SendRecv_Start(int callerId, struct shared_basic * info, MPI_Request *r_handles char *recvbuf) {
+	int target;
+	int callerId_global = TOTAL_CORES*info->nodeId + callerId;
+
+	float val;
+	char sendbuf[15];
+	sendbuf[14] = info->core_ctrl[callerId].data[5];
+	memcpy(&val, &(info->core_ctrl[callerId].data[6]), sizeof(float));
+	memcpy(&target, info->core_ctrl[callerId].data, sizeof(int));
+	memcpy(&sendbuf[0], &target, sizeof(int));
+	memcpy(&sendbuf[4], &val, sizeof(float));
+	memcpy(&sendbuf[8], &callerId_global, sizeof(int));
+	MPI_Isend(sendbuf, 15, MPI_CHAR, resolveRank(target), callerId_global, MPI_COMM_WORLD, &r_handles[callerId*2]);
+	MPI_Irecv(&recvbuf[callerId*15], 15, MPI_CHAR, resolveRank(target), target, MPI_COMM_WORLD, &r_handles[callerId*2+1]);
+}
+
+static void __attribute__((optimize("O0"))) remoteP2P_SendRecv_Finish(int callerId, struct shared_basic * info, char *recvbuf) {
+	int callerId_global = TOTAL_CORES*info->nodeId + callerId;
+
+	info->core_ctrl[callerId].data[10]=recvbuf[callerId*15+14]
+	memcpy(&(info->core_ctrl[callerId].data[11]), recvbuf[callerId*15+4], sizeof(float));
 }
 
 /**

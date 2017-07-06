@@ -798,8 +798,8 @@ static struct value_defn sendRecvDataWithHostProcess(struct value_defn to_send, 
 	sharedData->core_ctrl[myId].core_command=7;
 	sharedData->core_ctrl[myId].core_busy=0;
 	while (sharedData->core_ctrl[myId].core_busy==0 || sharedData->core_ctrl[myId].core_busy<=pb) { }
-	receivedData.type=sharedData->core_ctrl[myId].data[11];
-	cpy(receivedData.data, &sharedData->core_ctrl[myId].data[12], 4);
+	receivedData.type=sharedData->core_ctrl[myId].data[10];
+	cpy(receivedData.data, &sharedData->core_ctrl[myId].data[11], 4);
 	receivedData.dtype=SCALAR;
 	return receivedData;
 }
