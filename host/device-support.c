@@ -200,6 +200,7 @@ static void checkStatusFlagsOfCore(struct shared_basic * basicState, struct inte
 				interParallellaCommInProgress[coreId] = 1;
 			} else {
 				int flag;
+				printf("starting sendrecv request test\n");
 				MPI_Testall(2, &reqs[coreId*2], &flag, MPI_STATUS_IGNORE);
 				if (flag) {
 					printf("finishing sendrecv\n");
