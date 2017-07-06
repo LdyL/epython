@@ -194,18 +194,18 @@ static void checkStatusFlagsOfCore(struct shared_basic * basicState, struct inte
 			updateCoreWithComplete=1;
 		} else if (basicState->core_ctrl[coreId].core_command == 7) {
 			if (!interParallellaCommInProgress[coreId]) {
-				printf("starting sendrecv\n");
+				printf("[node %d]starting sendrecv\n", basicState->nodeId);
 				remoteP2P_SendRecv_Start(coreId, basicState, reqs, postbox);
-				printf("starting sendrecv done!\n");
+				printf("[node %d]starting sendrecv done!\n", basicState->nodeId);
 				interParallellaCommInProgress[coreId] = 1;
 			} else {
 				int flag;
-				printf("starting sendrecv request test\n");
 				MPI_Testall(2, &reqs[coreId*2], &flag, MPI_STATUS_IGNORE);
+				printf("[node %d]sendrecv tested with flag:%d\n", basicState->nodeId, flag);
 				if (flag) {
-					printf("finishing sendrecv\n");
+					printf("[node %d]finishing sendrecv\n", basicState->nodeId);
 					remoteP2P_SendRecv_Finish(coreId, basicState, postbox);
-					printf("sendrecv finished!\n");
+					printf("[node %d]sendrecv finished!\n", basicState->nodeId);
 					interParallellaCommInProgress[coreId] = 0;
 					updateCoreWithComplete=1;
 				}
