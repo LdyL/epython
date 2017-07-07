@@ -681,7 +681,7 @@ static void __attribute__((optimize("O0"))) remoteP2P_SendRecv_Start(int callerI
 		printf("[node %d]data to be sent has a integer value:%d(Length: %dbytes)\n",info->nodeId, val_int, sizeof(int));
 		memcpy(&sendbuf[4], &val_int, sizeof(int));
 	} else {
-		printf("[node %d]unsupported sending data type\n",info->nodeid)
+		printf("[node %d]unsupported sending data type\n",info->nodeId);
 	}
 	memcpy(&target, info->core_ctrl[callerId].data, sizeof(int));
 	memcpy(&sendbuf[0], &target, sizeof(int));
@@ -699,7 +699,7 @@ static void __attribute__((optimize("O0"))) remoteP2P_SendRecv_Finish(int caller
 		printf("[node %d]data received has a real value:%f\n",info->nodeId, val_float);
 		memcpy(&(info->core_ctrl[callerId].data[11]), &recvbuf[callerId*15+4], sizeof(float));
 	} else if (info->core_ctrl[callerId].data[10]==INT_TYPE) {
-		float val_int;
+		int val_int;
 		memcpy(&val_int, &recvbuf[callerId*15+4], sizeof(int));
 		printf("[node %d]data received has a integer value:%d\n",info->nodeId, val_int);
 		memcpy(&(info->core_ctrl[callerId].data[11]), &recvbuf[callerId*15+4], sizeof(int));
