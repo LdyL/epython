@@ -676,6 +676,7 @@ static void __attribute__((optimize("O0"))) remoteP2P_SendRecv_Start(int callerI
 		float val_float;
 		memcpy(&val_float, &(info->core_ctrl[callerId].data[6]), sizeof(float));
 		printf("[node %d]data to be sent has a real value:%f(Length: %dbytes)\n",info->nodeId, val_float, sizeof(float));
+		printbuf((char *)&val_float, sizeof(float));
 		memcpy(&sendbuf[4], &val_float, sizeof(float));
 	} else if (sendbuf[14]==INT_TYPE) {
 		int val_int;
