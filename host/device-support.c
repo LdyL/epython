@@ -202,7 +202,7 @@ static void checkStatusFlagsOfCore(struct shared_basic * basicState, struct inte
 				interParallellaCommInProgress[coreId] = 1;
 			} else {
 				int flag;
-				MPI_Testall(2, &reqs[coreId*2], &flag, MPI_STATUS_IGNORE);
+				MPI_Testall(2, &reqs[coreId*2], &flag, MPI_STATUSES_IGNORE);
 				//printf("[node %d]sendrecv tested with flag:%d\n", basicState->nodeId, flag);
 				if (flag) {
 					//printf("[node %d]finishing sendrecv\n", basicState->nodeId);
@@ -691,6 +691,8 @@ static void __attribute__((optimize("O0"))) remoteP2P_SendRecv_Start(int callerI
 
 	printf("[node %d]sendbuf:\n", info->nodeId);
 	printbuf(sendbuf, 15);
+	printf("[node %d]recvbuf before sending:\n", info->nodeId);
+	printbuf(&recvbuf[callerId*15], 15);
 
 	MPI_Isend(sendbuf, 15, MPI_CHAR, resolveRank(target), callerId_global, MPI_COMM_WORLD, &r_handles[callerId*2]);
 	MPI_Irecv(&recvbuf[callerId*15], 15, MPI_CHAR, resolveRank(target), target, MPI_COMM_WORLD, &r_handles[callerId*2+1]);
