@@ -156,7 +156,7 @@ void finaliseCores(void) {
 void monitorCores(struct shared_basic * basicState, struct interpreterconfiguration* configuration) {
 	int i;
 	int commStatus[TOTAL_CORES]={0};
-	char Parallella_postbox[TOTAL_CORES*15];
+	char Parallella_postbox[TOTAL_CORES*15*2];
 	MPI_Request requests[TOTAL_CORES*2];
 
 	while (totalActive > 0) {
@@ -666,53 +666,53 @@ static void __attribute__((optimize("O0"))) remoteP2P_Recv(int destId, struct sh
 /**
  * Provisional remote point-to-point communication function: SEND AND RECV
  */
-static void __attribute__((optimize("O0"))) remoteP2P_SendRecv_Start(int callerId, struct shared_basic * info, MPI_Request *r_handles, char *recvbuf) {
+static void __attribute__((optimize("O0"))) remoteP2P_SendRecv_Start(int callerId, struct shared_basic * info, MPI_Request *r_handles, char *sendrecvbuf) {
 	int target;
 	int callerId_global = TOTAL_CORES*info->nodeId + callerId;
 
-	char sendbuf[15];
-	sendbuf[14] = info->core_ctrl[callerId].data[5];
-	if (sendbuf[14]==REAL_TYPE) {
+	sendrecvbuf[callerId*30+14] = info->core_ctrl[callerId].data[5];
+	memcpy(&target, info->core_ctrl[callerId].data, sizeof(int));
+	if (sendrecvbuf[callerId*30+14]==REAL_TYPE) {
 		float val_float;
 		memcpy(&val_float, &(info->core_ctrl[callerId].data[6]), sizeof(float));
-		printf("[node %d]data to be sent has a real value:%f(Length: %dbytes)\n",info->nodeId, val_float, sizeof(float));
+		printf("[node %d]data to be sent to core%d has a real value:%f(Length: %dbytes)\n",info->nodeId, target, val_float, sizeof(float));
 		printbuf((char *)&val_float, sizeof(float));
-		memcpy(&sendbuf[4], &val_float, sizeof(float));
-	} else if (sendbuf[14]==INT_TYPE) {
+		memcpy(&sendrecvbuf[callerId*30+4], &val_float, sizeof(float));
+	} else if (sendrecvbuf[callerId*30+14]==INT_TYPE) {
 		int val_int;
 		memcpy(&val_int, &(info->core_ctrl[callerId].data[6]), sizeof(int));
-		printf("[node %d]data to be sent has a integer value:%d(Length: %dbytes)\n",info->nodeId, val_int, sizeof(int));
-		memcpy(&sendbuf[4], &val_int, sizeof(int));
+		printf("[node %d]data to be sent to core%d has a integer value:%d(Length: %dbytes)\n",info->nodeId, target, val_int, sizeof(int));
+		memcpy(&sendrecvbuf[callerId*30+4], &val_int, sizeof(int));
 	} else {
 		printf("[node %d]unsupported sending data type\n",info->nodeId);
 	}
-	memcpy(&target, info->core_ctrl[callerId].data, sizeof(int));
-	memcpy(&sendbuf[0], &target, sizeof(int));
-	memcpy(&sendbuf[8], &callerId_global, sizeof(int));
+
+	memcpy(&sendrecvbuf[callerId*30], &target, sizeof(int));
+	memcpy(&sendrecvbuf[callerId*30+8], &callerId_global, sizeof(int));
 
 	printf("[node %d]sendbuf:\n", info->nodeId);
-	printbuf(sendbuf, 15);
+	printbuf(&sendrecvbuf[callerId*30], 15);
 	printf("[node %d]recvbuf before sending:\n", info->nodeId);
-	printbuf(&recvbuf[callerId*15], 15);
+	printbuf(&sendrecvbuf[callerId*30+15], 15);
 
-	MPI_Isend(sendbuf, 15, MPI_CHAR, resolveRank(target), callerId_global, MPI_COMM_WORLD, &r_handles[callerId*2]);
-	MPI_Irecv(&recvbuf[callerId*15], 15, MPI_CHAR, resolveRank(target), target, MPI_COMM_WORLD, &r_handles[callerId*2+1]);
+	MPI_Isend(&sendrecvbuf[callerId*30], 15, MPI_CHAR, resolveRank(target), callerId_global, MPI_COMM_WORLD, &r_handles[callerId*2]);
+	MPI_Irecv(&sendrecvbuf[callerId*30+15], 15, MPI_CHAR, resolveRank(target), target, MPI_COMM_WORLD, &r_handles[callerId*2+1]);
 }
 
-static void __attribute__((optimize("O0"))) remoteP2P_SendRecv_Finish(int callerId, struct shared_basic * info, char *recvbuf) {
-	info->core_ctrl[callerId].data[10]=recvbuf[callerId*15+14];
+static void __attribute__((optimize("O0"))) remoteP2P_SendRecv_Finish(int callerId, struct shared_basic * info, char *sendrecvbuf) {
+	info->core_ctrl[callerId].data[10]=sendrecvbuf[callerId*30+15+14];
 	printf("[node %d]recvbuf:\n", info->nodeId);
-	printbuf(&recvbuf[callerId*15], 15);
+	printbuf(&sendrecvbuf[callerId*30+15], 15);
 	if (info->core_ctrl[callerId].data[10]==REAL_TYPE) {
 		float val_float;
-		memcpy(&val_float, &recvbuf[callerId*15+4], sizeof(float));
+		memcpy(&val_float, &sendrecvbuf[callerId*30+15+4], sizeof(float));
 		printf("[node %d]data received has a real value:%f\n",info->nodeId, val_float);
-		memcpy(&(info->core_ctrl[callerId].data[11]), &recvbuf[callerId*15+4], sizeof(float));
+		memcpy(&(info->core_ctrl[callerId].data[11]), &sendrecvbuf[callerId*30+15+4], sizeof(float));
 	} else if (info->core_ctrl[callerId].data[10]==INT_TYPE) {
 		int val_int;
-		memcpy(&val_int, &recvbuf[callerId*15+4], sizeof(int));
+		memcpy(&val_int, &sendrecvbuf[callerId*30+15+4], sizeof(int));
 		printf("[node %d]data received has a integer value:%d\n",info->nodeId, val_int);
-		memcpy(&(info->core_ctrl[callerId].data[11]), &recvbuf[callerId*15+4], sizeof(int));
+		memcpy(&(info->core_ctrl[callerId].data[11]), &sendrecvbuf[callerId*30+15+4], sizeof(int));
 	} else {
 		printf("[node %d]unknown data type for received data\n",info->nodeId);
 	}
