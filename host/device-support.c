@@ -671,12 +671,12 @@ static void __attribute__((optimize("O0"))) remoteP2P_SendRecv_Start(int callerI
 	char sendbuf[15];
 	sendbuf[14] = info->core_ctrl[callerId].data[5];
 	if (sendbuf[14]==REAL_TYPE) {
-		float var_float;
+		float val_float;
 		memcpy(&val_float, &(info->core_ctrl[callerId].data[6]), sizeof(float));
 		printf("[node %d]data to be sent has a real value:%f(Length: %dbytes)\n",info->nodeId, val_float, sizeof(float));
 		memcpy(&sendbuf[4], &val_float, sizeof(float));
 	} else if (sendbuf[14]==INT_TYPE) {
-		int var_int;
+		int val_int;
 		memcpy(&val_int, &(info->core_ctrl[callerId].data[6]), sizeof(int));
 		printf("[node %d]data to be sent has a integer value:%d(Length: %dbytes)\n",info->nodeId, val_int, sizeof(int));
 		memcpy(&sendbuf[4], &val_int, sizeof(int));
@@ -694,13 +694,13 @@ static void __attribute__((optimize("O0"))) remoteP2P_SendRecv_Start(int callerI
 static void __attribute__((optimize("O0"))) remoteP2P_SendRecv_Finish(int callerId, struct shared_basic * info, char *recvbuf) {
 	info->core_ctrl[callerId].data[10]=recvbuf[callerId*15+14];
 	if (info->core_ctrl[callerId].data[10]==REAL_TYPE) {
-		float var_float;
-		memcpy(&var_float, &recvbuf[callerId*15+4], sizeof(float));
+		float val_float;
+		memcpy(&val_float, &recvbuf[callerId*15+4], sizeof(float));
 		printf("[node %d]data received has a real value:%f\n",info->nodeId, val_float);
 		memcpy(&(info->core_ctrl[callerId].data[11]), &recvbuf[callerId*15+4], sizeof(float));
 	} else if (info->core_ctrl[callerId].data[10]==INT_TYPE) {
-		float var_int;
-		memcpy(&var_int, &recvbuf[callerId*15+4], sizeof(int));
+		float val_int;
+		memcpy(&val_int, &recvbuf[callerId*15+4], sizeof(int));
 		printf("[node %d]data received has a integer value:%d\n",info->nodeId, val_int);
 		memcpy(&(info->core_ctrl[callerId].data[11]), &recvbuf[callerId*15+4], sizeof(int));
 	} else {
