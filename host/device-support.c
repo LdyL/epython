@@ -668,21 +668,44 @@ static void __attribute__((optimize("O0"))) remoteP2P_SendRecv_Start(int callerI
 	int target;
 	int callerId_global = TOTAL_CORES*info->nodeId + callerId;
 
-	float val;
 	char sendbuf[15];
 	sendbuf[14] = info->core_ctrl[callerId].data[5];
-	memcpy(&val, &(info->core_ctrl[callerId].data[6]), sizeof(float));
+	if (sendbuf[14]==REAL_TYPE) {
+		float var_float;
+		memcpy(&val_float, &(info->core_ctrl[callerId].data[6]), sizeof(float));
+		printf("[node %d]data to be sent has a real value:%f(Length: %dbytes)\n",info->nodeId, val_float, sizeof(float));
+		memcpy(&sendbuf[4], &val_float, sizeof(float));
+	} else if (sendbuf[14]==INT_TYPE) {
+		int var_int;
+		memcpy(&val_int, &(info->core_ctrl[callerId].data[6]), sizeof(int));
+		printf("[node %d]data to be sent has a integer value:%d(Length: %dbytes)\n",info->nodeId, val_int, sizeof(int));
+		memcpy(&sendbuf[4], &val_int, sizeof(int));
+	} else {
+		printf("[node %d]unsupported sending data type\n",info->nodeid)
+	}
 	memcpy(&target, info->core_ctrl[callerId].data, sizeof(int));
 	memcpy(&sendbuf[0], &target, sizeof(int));
-	memcpy(&sendbuf[4], &val, sizeof(float));
 	memcpy(&sendbuf[8], &callerId_global, sizeof(int));
+
 	MPI_Isend(sendbuf, 15, MPI_CHAR, resolveRank(target), callerId_global, MPI_COMM_WORLD, &r_handles[callerId*2]);
 	MPI_Irecv(&recvbuf[callerId*15], 15, MPI_CHAR, resolveRank(target), target, MPI_COMM_WORLD, &r_handles[callerId*2+1]);
 }
 
 static void __attribute__((optimize("O0"))) remoteP2P_SendRecv_Finish(int callerId, struct shared_basic * info, char *recvbuf) {
 	info->core_ctrl[callerId].data[10]=recvbuf[callerId*15+14];
-	memcpy(&(info->core_ctrl[callerId].data[11]), &recvbuf[callerId*15+4], sizeof(float));
+	if (info->core_ctrl[callerId].data[10]==REAL_TYPE) {
+		float var_float;
+		memcpy(&var_float, &recvbuf[callerId*15+4], sizeof(float));
+		printf("[node %d]data received has a real value:%f\n",info->nodeId, val_float);
+		memcpy(&(info->core_ctrl[callerId].data[11]), &recvbuf[callerId*15+4], sizeof(float));
+	} else if (info->core_ctrl[callerId].data[10]==INT_TYPE) {
+		float var_int;
+		memcpy(&var_int, &recvbuf[callerId*15+4], sizeof(int));
+		printf("[node %d]data received has a integer value:%d\n",info->nodeId, val_int);
+		memcpy(&(info->core_ctrl[callerId].data[11]), &recvbuf[callerId*15+4], sizeof(int));
+	} else {
+		printf("[node %d]unknown data type for received data\n", );
+	}
 }
 
 /**
