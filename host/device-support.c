@@ -704,7 +704,7 @@ static void __attribute__((optimize("O0"))) remoteP2P_SendRecv_Finish(int caller
 		printf("[node %d]data received has a integer value:%d\n",info->nodeId, val_int);
 		memcpy(&(info->core_ctrl[callerId].data[11]), &recvbuf[callerId*15+4], sizeof(int));
 	} else {
-		printf("[node %d]unknown data type for received data\n", );
+		printf("[node %d]unknown data type for received data\n",info->nodeId);
 	}
 }
 
