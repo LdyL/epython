@@ -75,6 +75,8 @@ static int resolveRank(int);
 static char* getEpiphanyExecutableFile(struct interpreterconfiguration*);
 static int doesFileExist(char*);
 static char * allocateChunkInSharedHeapMemory(size_t, struct core_ctrl *);
+static void printbuf(char *, int);
+static void printbinchar(char);
 
 /**
  * Loads up the code onto the appropriate Epiphany cores, sets up the state (Python bytecode, symbol table, data area etc)
@@ -687,12 +689,17 @@ static void __attribute__((optimize("O0"))) remoteP2P_SendRecv_Start(int callerI
 	memcpy(&sendbuf[0], &target, sizeof(int));
 	memcpy(&sendbuf[8], &callerId_global, sizeof(int));
 
+	printf("[node %d]sendbuf:\n", info->nodeId);
+	printbuf(sendbuf, 15);
+
 	MPI_Isend(sendbuf, 15, MPI_CHAR, resolveRank(target), callerId_global, MPI_COMM_WORLD, &r_handles[callerId*2]);
 	MPI_Irecv(&recvbuf[callerId*15], 15, MPI_CHAR, resolveRank(target), target, MPI_COMM_WORLD, &r_handles[callerId*2+1]);
 }
 
 static void __attribute__((optimize("O0"))) remoteP2P_SendRecv_Finish(int callerId, struct shared_basic * info, char *recvbuf) {
 	info->core_ctrl[callerId].data[10]=recvbuf[callerId*15+14];
+	printf("[node %d]recvbuf:\n", info->nodeId);
+	printbuf(&recvbuf[callerId*15], 15);
 	if (info->core_ctrl[callerId].data[10]==REAL_TYPE) {
 		float val_float;
 		memcpy(&val_float, &recvbuf[callerId*15+4], sizeof(float));
@@ -715,4 +722,22 @@ static int resolveRank(int id) {
 	int rank;
 	rank = (id+1)/TOTAL_CORES;
 	return rank;
+}
+
+/**
+ * Debugging function: Display the bits int the memory
+ */
+static void printbuf(char *buf, int length) {
+	int i;
+	for (i=0; i<length; i++){
+		printbinchar(buf[i]);
+	}
+	printf("\n");
+}
+
+static void printbinchar(char c) {
+    for (int i = 7; i >= 0; --i) {
+        putchar( (c & (1 << i)) ? '1' : '0' );
+    }
+    printf(" ");
 }
