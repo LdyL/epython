@@ -116,10 +116,15 @@ int main (int argc, char *argv[]) {
 		w->configuration=configuration;
 		w->deviceState=deviceState;
 		pthread_create(&epiphany_management_thread, NULL, runCodeOnEpiphany, (void*)w);
+		printf("[node %d]pthread created\n", deviceState->nodeId);
 		if (configuration->fullPythonHost) {
+			printf("[node %d]runFullPythonInteractivityOnHost\n", deviceState->nodeId);
 			runFullPythonInteractivityOnHost(configuration, deviceState, &epiphany_management_thread);
+			printf("[node %d]runFullPythonInteractivityOnHost Finished\n", deviceState->nodeId);
 		} else {
+			printf("[node %d]runCodeOnHost\n", deviceState->nodeId);
 			runCodeOnHost(configuration, deviceState);
+			printf("[node %d]runCodeOnHost Finished\n", deviceState->nodeId);
 		}
 #else
 		struct shared_basic * standAloneState=(struct shared_basic*) malloc(sizeof(struct shared_basic));
