@@ -137,9 +137,11 @@ int main (int argc, char *argv[]) {
 		finaliseCores();
 #endif
 	}
+	printf("[node %d]Finalises\n", deviceState->nodeId);
 	free(configuration->intentActive);
 	free(configuration);
 	MPI_Finalize();
+	printf("Epython Finalises\n");
 	return 0;
 }
 

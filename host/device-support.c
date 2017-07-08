@@ -65,7 +65,7 @@ static void displayCoreMessage(int, struct core_ctrl*);
 static void raiseError(int, struct core_ctrl*);
 static void stringConcatenate(int, struct core_ctrl*);
 static void inputCoreMessage(int, struct core_ctrl*);
-static void syncNodes();
+static void syncNodes(struct shared_basic *);
 static void remoteP2P_Send(int, struct shared_basic*);
 static void remoteP2P_Recv(int, struct shared_basic*);
 static void remoteP2P_SendRecv_Start(int, struct shared_basic*, MPI_Request *, char *);
@@ -167,6 +167,7 @@ void monitorCores(struct shared_basic * basicState, struct interpreterconfigurat
 			}
 		}
 	}
+	printf("[node %d]Monitor exit\n", basicState->nodeId);
 }
 
 /**
@@ -177,6 +178,7 @@ static void checkStatusFlagsOfCore(struct shared_basic * basicState, struct inte
 	if (basicState->core_ctrl[coreId].core_busy == 0) {
 		if (basicState->core_ctrl[coreId].core_run == 0) {
 			deactivateCore(configuration, coreId);
+			printf("[node %d]Core %d deactivated\n", basicState->nodeId, coreId);
 		} else if (basicState->core_ctrl[coreId].core_command == 1) {
 			displayCoreMessage(coreId, &basicState->core_ctrl[coreId]);
 			updateCoreWithComplete=1;
@@ -214,7 +216,7 @@ static void checkStatusFlagsOfCore(struct shared_basic * basicState, struct inte
 				}
 			}
 		} else if (basicState->core_ctrl[coreId].core_command == 10) {
-			syncNodes();
+			syncNodes(basicState);
 			updateCoreWithComplete=1;
 		} else if (basicState->core_ctrl[coreId].core_command >= 1000) {
 			performMathsOp(&basicState->core_ctrl[coreId]);
@@ -623,12 +625,13 @@ static void timeval_subtract(struct timeval *result, struct timeval *x,  struct 
 /**
  * Synchronises all nodes of Parallella cluster
  */
-static void __attribute__((optimize("O0"))) syncNodes() {
+static void __attribute__((optimize("O0"))) syncNodes(struct shared_basic * info) {
 	int i;
 	int size, myid;
 	int recvSignal, sendSignal;
-	MPI_Comm_size(MPI_COMM_WORLD, &size);
-	MPI_Comm_rank(MPI_COMM_WORLD, &myid);
+	size = info->num_nodes;
+	myid = info->nodeId;
+
 	if (myid==0) {
 		for (i=1; i<size; i++) {
 			MPI_Recv(&recvSignal, 1, MPI_INT, i, BARRIER_SIG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
@@ -640,6 +643,7 @@ static void __attribute__((optimize("O0"))) syncNodes() {
 		MPI_Send(&sendSignal, 1, MPI_INT, 0, BARRIER_SIG, MPI_COMM_WORLD);
 		MPI_Recv(&recvSignal, 1, MPI_INT, 0, BARRIER_SIG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 	}
+	printf("[node %d]Sync finished!\n", info->num_nodes);
 }
 
 /**
