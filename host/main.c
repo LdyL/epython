@@ -169,7 +169,7 @@ static void doParse(char * contents) {
 static void* runCodeOnEpiphany(void * raw_wrapper) {
 	struct epiphanyMonitorThreadWrapper * wrapper=(struct epiphanyMonitorThreadWrapper*) raw_wrapper;
 	monitorCores(wrapper->deviceState, wrapper->configuration);
-	printf("runCodeOnEpiphany Ready to return\n", );
+	printf("runCodeOnEpiphany Ready to return\n");
 	return NULL;
 }
 #endif
