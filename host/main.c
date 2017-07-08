@@ -137,7 +137,7 @@ int main (int argc, char *argv[]) {
 		finaliseCores();
 #endif
 	}
-	printf("[node %d]Finalises\n", deviceState->nodeId);
+	printf("Just before Host MPI Finalize\n");
 	free(configuration->intentActive);
 	free(configuration);
 	MPI_Finalize();
