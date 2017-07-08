@@ -643,7 +643,7 @@ static void __attribute__((optimize("O0"))) syncNodes(struct shared_basic * info
 		MPI_Send(&sendSignal, 1, MPI_INT, 0, BARRIER_SIG, MPI_COMM_WORLD);
 		MPI_Recv(&recvSignal, 1, MPI_INT, 0, BARRIER_SIG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 	}
-	printf("[node %d]Sync finished!\n", info->num_nodes);
+	printf("[node %d]Sync finished!\n", info->nodeId);
 }
 
 /**
