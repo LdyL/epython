@@ -50,6 +50,7 @@ static struct value_defn recvDataFromDeviceCore(int);
 static struct value_defn sendRecvDataWithHostProcess(struct value_defn, int);
 static struct value_defn sendRecvDataWithDeviceCore(struct value_defn, int);
 static void performBarrier(volatile e_barrier_t[], e_barrier_t*[]);
+static void performBarrier_remote(volatile e_barrier_t[], e_barrier_t*[]);
 static char* copyStringToSharedMemoryAndSetLocation(char*, int, int, struct symbol_node*);
 static struct value_defn doGetInputFromUser();
 static int stringCmp(char*, char*);
@@ -836,7 +837,11 @@ void syncCores(int global) {
 		sharedData->core_ctrl[myId].core_busy=0;
 		while (sharedData->core_ctrl[myId].core_busy==0 || sharedData->core_ctrl[myId].core_busy<=pb) { }
 	}
-	performBarrier(syncbarriers, sync_tgt_bars);
+	if (sharedData->num_nodes == 1) {
+    performBarrier(syncbarriers, sync_tgt_bars);
+  } else {
+    performBarrier_remote(syncbarriers, sync_tgt_bars);
+  }
 }
 
 /**
@@ -856,6 +861,39 @@ static void performBarrier(volatile e_barrier_t barrier_array[], e_barrier_t  * 
 			if (sharedData->core_ctrl[i].active) barrier_array[i] = 0;
 		}
 		// set remote slots
+		for (i=1; i<TOTAL_CORES; i++) {
+			if (sharedData->core_ctrl[i].active) *(target_barrier_array[i]) = 1;
+		}
+	} else {
+		*(target_barrier_array[0]) = 1;
+		while (barrier_array[0] == 0) {};
+		barrier_array[0] = 0;
+	}
+}
+
+/**
+ * Performs a remote barrier for all epiphany core on different Parallellas
+ */
+static void performBarrier_remote(volatile e_barrier_t barrier_array[], e_barrier_t  * target_barrier_array[]) {
+	// Barrier as a Flip-Flop
+	if (myId == lowestCoreId) {
+		int i;
+		barrier_array[myId] = 1;
+		// poll on all slots on local Epiphany
+		for (i=1; i<TOTAL_CORES; i++) {
+			if (sharedData->core_ctrl[i].active) while (barrier_array[i] == 0) {};
+		}
+		for (i=0; i<TOTAL_CORES; i++) {
+			if (sharedData->core_ctrl[i].active) barrier_array[i] = 0;
+		}
+
+    //Synchronises with remote Epiphany cores (send request to host and waiting)
+    unsigned int pb=sharedData->core_ctrl[myId].core_busy;
+		sharedData->core_ctrl[myId].core_command=10;
+		sharedData->core_ctrl[myId].core_busy=0;
+		while (sharedData->core_ctrl[myId].core_busy==0 || sharedData->core_ctrl[myId].core_busy<=pb) { }
+
+		// set remote ecore slots in the current Parallella
 		for (i=1; i<TOTAL_CORES; i++) {
 			if (sharedData->core_ctrl[i].active) *(target_barrier_array[i]) = 1;
 		}

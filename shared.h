@@ -39,6 +39,9 @@
 #define LOCAL_CORE_MEMORY_MAP_TOP 0x8000
 #define LOCAL_CORE_STACK_SIZE 0x400
 
+//MPI tags
+#define BARRIER_SIG 101
+
 struct core_ctrl {
 	unsigned int core_run, core_busy, core_command;
 	char *symbol_table, *stack_start, *heap_start,

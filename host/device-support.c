@@ -65,6 +65,7 @@ static void displayCoreMessage(int, struct core_ctrl*);
 static void raiseError(int, struct core_ctrl*);
 static void stringConcatenate(int, struct core_ctrl*);
 static void inputCoreMessage(int, struct core_ctrl*);
+static void syncNodes();
 static void remoteP2P_Send(int, struct shared_basic*);
 static void remoteP2P_Recv(int, struct shared_basic*);
 static void remoteP2P_SendRecv_Start(int, struct shared_basic*, MPI_Request *, char *);
@@ -212,6 +213,9 @@ static void checkStatusFlagsOfCore(struct shared_basic * basicState, struct inte
 					updateCoreWithComplete=1;
 				}
 			}
+		} else if (basicState->core_ctrl[coreId].core_command == 10) {
+			syncNodes();
+			updateCoreWithComplete=1;
 		} else if (basicState->core_ctrl[coreId].core_command >= 1000) {
 			performMathsOp(&basicState->core_ctrl[coreId]);
 			updateCoreWithComplete=1;
@@ -614,6 +618,28 @@ static void timeval_subtract(struct timeval *result, struct timeval *x,  struct 
      tv_usec is certainly positive. */
   result->tv_sec = x->tv_sec - y->tv_sec;
   result->tv_usec = x->tv_usec - y->tv_usec;
+}
+
+/**
+ * Synchronises all nodes of Parallella cluster
+ */
+static void __attribute__((optimize("O0"))) syncNodes() {
+	int i;
+	int size, myid;
+	int recvSignal, sendSignal;
+	MPI_Comm_size(MPI_COMM_WORLD, &size);
+	MPI_Comm_rank(MPI_COMM_WORLD, &myid);
+	if (myid==0) {
+		for (i=1; i<size; i++) {
+			MPI_Recv(&recvSignal, 1, MPI_INT, i, BARRIER_SIG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+		}
+		for (i=1; i<size; i++) {
+			MPI_Send(&sendSignal, 1, MPI_INT, i, BARRIER_SIG, MPI_COMM_WORLD);
+		}
+	}	else {
+		MPI_Send(&sendSignal, 1, MPI_INT, 0, BARRIER_SIG, MPI_COMM_WORLD);
+		MPI_Recv(&recvSignal, 1, MPI_INT, 0, BARRIER_SIG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+	}
 }
 
 /**
