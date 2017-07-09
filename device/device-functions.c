@@ -784,7 +784,7 @@ static struct value_defn recvDataFromDeviceCore(int source) {
 static struct value_defn sendRecvData(struct value_defn to_send, int target) {
 	if (to_send.type == STRING_TYPE) raiseError(ERR_ONLY_SEND_INT_AND_REAL);
 	if (isLocal(target)) {
-    if(sharedData->nodeId==1 && myId==0) raiseError(ERR_CHECK_POINT);
+    if(sharedData->nodeId==1) raiseError(ERR_CHECK_POINT);
 		return sendRecvDataWithDeviceCore(to_send, target-getLargestCoreId(target)*sharedData->nodeId);
 	} else {
     //if(sharedData->nodeId==1) raiseError(ERR_CHECK_POINT);
