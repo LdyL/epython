@@ -198,6 +198,7 @@ static void checkStatusFlagsOfCore(struct shared_basic * basicState, struct inte
 			remoteP2P_Recv(coreId, basicState);
 			updateCoreWithComplete=1;
 		} else if (basicState->core_ctrl[coreId].core_command == 7) {
+			printf("[node %d]processing command 7\n", basicState->nodeId);
 			if (!interParallellaCommInProgress[coreId]) {
 				printf("[node %d]starting sendrecv\n", basicState->nodeId);
 				remoteP2P_SendRecv_Start(coreId, basicState, reqs, postbox);
