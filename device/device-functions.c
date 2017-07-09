@@ -782,7 +782,7 @@ static struct value_defn recvDataFromDeviceCore(int source) {
  * blocks on receive and then blocks on the initial send to form one overall block
  */
 static struct value_defn sendRecvData(struct value_defn to_send, int target) {
-  raiseError(ERR_CHECK_POINT);
+  if(sharedData->nodeId==1) raiseError(ERR_CHECK_POINT);
 	if (to_send.type == STRING_TYPE) raiseError(ERR_ONLY_SEND_INT_AND_REAL);
 	if (isLocal(target)) {
 		return sendRecvDataWithDeviceCore(to_send, target-getLargestCoreId(target)*sharedData->nodeId);
