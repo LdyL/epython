@@ -791,6 +791,7 @@ static struct value_defn sendRecvData(struct value_defn to_send, int target) {
 }
 
 static struct value_defn sendRecvDataWithHostProcess(struct value_defn to_send, int hostProcessTarget) {
+  raiseError(ERR_CHECK_POINT);
 	struct value_defn receivedData;
 	cpy(sharedData->core_ctrl[myId].data, &hostProcessTarget, 4);
 	sharedData->core_ctrl[myId].data[5]=to_send.type;
