@@ -728,7 +728,9 @@ static void __attribute__((optimize("O0"))) remoteP2P_SendRecv_Start(int callerI
 	//printbuf(&sendrecvbuf[callerId*30+15], 15);
 
 	MPI_Isend(&sendrecvbuf[callerId*30], 15, MPI_CHAR, resolveRank(target), callerId_global, MPI_COMM_WORLD, &r_handles[callerId*2]);
+	printf("[node %d]sending to rank %d \n", info->nodeId,resolveRank(target));
 	MPI_Irecv(&sendrecvbuf[callerId*30+15], 15, MPI_CHAR, resolveRank(target), target, MPI_COMM_WORLD, &r_handles[callerId*2+1]);
+	printf("[node %d]receiving from rank %d \n", info->nodeId,resolveRank(target));
 }
 
 static void __attribute__((optimize("O0"))) remoteP2P_SendRecv_Finish(int callerId, struct shared_basic * info, char *sendrecvbuf) {
