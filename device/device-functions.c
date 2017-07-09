@@ -1036,7 +1036,7 @@ static int stringCmp(char * str1, char * str2) {
 }
 
 static int isLocal(int id) {
-  int localNumCores = getLargestCoreId(id);
+  int localNumCores = TOTAL_CORES;
   int myNodeId = sharedData->nodeId;
   if(myNodeId*localNumCores <= id && id < (myNodeId+1)*localNumCores) {
     return 1;
