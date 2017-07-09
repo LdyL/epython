@@ -204,10 +204,12 @@ static void checkStatusFlagsOfCore(struct shared_basic * basicState, struct inte
 				//printf("[node %d]starting sendrecv done!\n", basicState->nodeId);
 				interParallellaCommInProgress[coreId] = 1;
 			} else {
-				int flag;
-				MPI_Testall(2, &reqs[coreId*2], &flag, MPI_STATUSES_IGNORE);
-				printf("[node %d]sendrecv tested with flag:%d\n", basicState->nodeId, flag);
-				if (flag) {
+				int flagsend, flagrecv;
+				MPI_Test(&reqs[coreId*2], &flagsend, MPI_STATUS_IGNORE);
+				printf("[node %d]sendrecv [send]tested with flag:%d\n", basicState->nodeId, flagsend);
+				MPI_Test(&reqs[coreId*2+1], &flagrecv, MPI_STATUS_IGNORE);
+				printf("[node %d]sendrecv [recv]tested with flag:%d\n", basicState->nodeId, flagrecv);
+				if (flagsend && flagrecv) {
 					//printf("[node %d]finishing sendrecv\n", basicState->nodeId);
 					remoteP2P_SendRecv_Finish(coreId, basicState, postbox);
 					printf("[node %d]sendrecv finished!\n", basicState->nodeId);
