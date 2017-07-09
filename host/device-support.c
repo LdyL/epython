@@ -757,7 +757,7 @@ static void __attribute__((optimize("O0"))) remoteP2P_SendRecv_Finish(int caller
  */
 static int resolveRank(int id) {
 	int rank;
-	rank = (id+1)/TOTAL_CORES;
+	rank = id/TOTAL_CORES;
 	return rank;
 }
 
