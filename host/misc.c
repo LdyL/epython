@@ -110,7 +110,8 @@ char* translateErrorCodeToMessage(unsigned char errorCode) {
         errorMessage="Non-blocking sends between device and virtual cores on the host are not yet supported";
         break;
     case ERR_CHECK_POINT:
-        errorMessage="***** Check Point ! *****"
+        errorMessage="***** Check Point ! *****";
+        break;
     }
     if (errorMessage != NULL) {
         char * msgToRet=(char*) malloc(strlen(errorMessage) + 1);
