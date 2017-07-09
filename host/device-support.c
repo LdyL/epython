@@ -199,18 +199,18 @@ static void checkStatusFlagsOfCore(struct shared_basic * basicState, struct inte
 			updateCoreWithComplete=1;
 		} else if (basicState->core_ctrl[coreId].core_command == 7) {
 			if (!interParallellaCommInProgress[coreId]) {
-				//printf("[node %d]starting sendrecv\n", basicState->nodeId);
+				printf("[node %d]starting sendrecv\n", basicState->nodeId);
 				remoteP2P_SendRecv_Start(coreId, basicState, reqs, postbox);
 				//printf("[node %d]starting sendrecv done!\n", basicState->nodeId);
 				interParallellaCommInProgress[coreId] = 1;
 			} else {
 				int flag;
 				MPI_Testall(2, &reqs[coreId*2], &flag, MPI_STATUSES_IGNORE);
-				//printf("[node %d]sendrecv tested with flag:%d\n", basicState->nodeId, flag);
+				printf("[node %d]sendrecv tested with flag:%d\n", basicState->nodeId, flag);
 				if (flag) {
 					//printf("[node %d]finishing sendrecv\n", basicState->nodeId);
 					remoteP2P_SendRecv_Finish(coreId, basicState, postbox);
-					//printf("[node %d]sendrecv finished!\n", basicState->nodeId);
+					printf("[node %d]sendrecv finished!\n", basicState->nodeId);
 					interParallellaCommInProgress[coreId] = 0;
 					updateCoreWithComplete=1;
 				}
@@ -705,13 +705,13 @@ static void __attribute__((optimize("O0"))) remoteP2P_SendRecv_Start(int callerI
 	if (sendrecvbuf[callerId*30+14]==REAL_TYPE) {
 		float val_float;
 		memcpy(&val_float, &(info->core_ctrl[callerId].data[6]), sizeof(float));
-		//printf("[node %d]data to be sent to core%d has a real value:%f(Length: %dbytes)\n",info->nodeId, target, val_float, sizeof(float));
+		printf("[node %d]data to be sent to core%d has a real value:%f(Length: %dbytes)\n",info->nodeId, target, val_float, sizeof(float));
 		//printbuf((char *)&val_float, sizeof(float));
 		memcpy(&sendrecvbuf[callerId*30+4], &val_float, sizeof(float));
 	} else if (sendrecvbuf[callerId*30+14]==INT_TYPE) {
 		int val_int;
 		memcpy(&val_int, &(info->core_ctrl[callerId].data[6]), sizeof(int));
-		//printf("[node %d]data to be sent to core%d has a integer value:%d(Length: %dbytes)\n",info->nodeId, target, val_int, sizeof(int));
+		printf("[node %d]data to be sent to core%d has a integer value:%d(Length: %dbytes)\n",info->nodeId, target, val_int, sizeof(int));
 		memcpy(&sendrecvbuf[callerId*30+4], &val_int, sizeof(int));
 	} else {
 		printf("[node %d]unsupported sending data type\n",info->nodeId);
