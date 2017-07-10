@@ -6,7 +6,7 @@ This illustrates distributing data amongst the cluster cores, halo swapping
 from parallel import *
 from math import sqrt
 
-DATA_SIZE=100
+DATA_SIZE=1000
 MAX_ITS=10000
 
 # Work out the amount of data to hold on this core

@@ -177,10 +177,8 @@ void monitorCores(struct shared_basic * basicState, struct interpreterconfigurat
 static void checkStatusFlagsOfCore(struct shared_basic * basicState, struct interpreterconfiguration* configuration, int coreId, MPI_Request *reqs, int * interParallellaCommInProgress, char * postbox) {
 	char updateCoreWithComplete=0;
 	if (basicState->core_ctrl[coreId].core_busy == 0) {
-		//if (basicState->nodeId==1) printf("[node %d][monitor]processing local core %d with command[%d]\n", basicState->nodeId, coreId, basicState->core_ctrl[coreId].core_command);
 		if (basicState->core_ctrl[coreId].core_run == 0) {
 			deactivateCore(configuration, coreId);
-			printf("[node %d]Core %d deactivated\n", basicState->nodeId, coreId);
 		} else if (basicState->core_ctrl[coreId].core_command == 1) {
 			displayCoreMessage(coreId, &basicState->core_ctrl[coreId]);
 			updateCoreWithComplete=1;
@@ -219,22 +217,15 @@ static void checkStatusFlagsOfCore(struct shared_basic * basicState, struct inte
 				}
 			}
 		} else if (basicState->core_ctrl[coreId].core_command == 7) {
-			//if (basicState->nodeId==1) printf("[node %d]processing command 7 [inProgres flag:%d]\n", basicState->nodeId, interParallellaCommInProgress[coreId]);
 			if (!interParallellaCommInProgress[coreId]) {
-				//printf("[node %d]starting sendrecv\n", basicState->nodeId);
 				remoteP2P_SendRecv_Start(coreId, basicState, reqs, postbox);
-				//printf("[node %d]starting sendrecv done!\n", basicState->nodeId);
 				interParallellaCommInProgress[coreId] = 1;
 			} else {
 				int flagsend, flagrecv;
 				MPI_Test(&reqs[coreId*2], &flagsend, MPI_STATUS_IGNORE);
-				//printf("[node %d]sendrecv [send]tested with flag:%d\n", basicState->nodeId, flagsend);
 				MPI_Test(&reqs[coreId*2+1], &flagrecv, MPI_STATUS_IGNORE);
-				//printf("[node %d]sendrecv [recv]tested with flag:%d\n", basicState->nodeId, flagrecv);
 				if (flagsend && flagrecv) {
-					//printf("[node %d]finishing sendrecv\n", basicState->nodeId);
 					remoteP2P_SendRecv_Finish(coreId, basicState, postbox);
-					//printf("[node %d]sendrecv finished!\n", basicState->nodeId);
 					interParallellaCommInProgress[coreId] = 0;
 					updateCoreWithComplete=1;
 				}
@@ -724,13 +715,10 @@ static void __attribute__((optimize("O0"))) remoteP2P_SendRecv_Start(int callerI
 	if (sendrecvbuf[callerId*30+14]==REAL_TYPE) {
 		float val_float;
 		memcpy(&val_float, &(info->core_ctrl[callerId].data[6]), sizeof(float));
-		//printf("[node %d]data to be sent to core%d has a real value:%f(Length: %dbytes)\n",info->nodeId, target, val_float, sizeof(float));
-		//printbuf((char *)&val_float, sizeof(float));
 		memcpy(&sendrecvbuf[callerId*30+4], &val_float, sizeof(float));
 	} else if (sendrecvbuf[callerId*30+14]==INT_TYPE) {
 		int val_int;
 		memcpy(&val_int, &(info->core_ctrl[callerId].data[6]), sizeof(int));
-		//printf("[node %d]data to be sent to core%d has a integer value:%d(Length: %dbytes)\n",info->nodeId, target, val_int, sizeof(int));
 		memcpy(&sendrecvbuf[callerId*30+4], &val_int, sizeof(int));
 	} else {
 		printf("[node %d]unsupported sending data type\n",info->nodeId);
@@ -739,30 +727,19 @@ static void __attribute__((optimize("O0"))) remoteP2P_SendRecv_Start(int callerI
 	memcpy(&sendrecvbuf[callerId*30], &target, sizeof(int));
 	memcpy(&sendrecvbuf[callerId*30+8], &callerId_global, sizeof(int));
 
-	//printf("[node %d]sendbuf:\n", info->nodeId);
-	//printbuf(&sendrecvbuf[callerId*30], 15);
-	//printf("[node %d]recvbuf before sending:\n", info->nodeId);
-	//printbuf(&sendrecvbuf[callerId*30+15], 15);
-
 	MPI_Isend(&sendrecvbuf[callerId*30], 15, MPI_CHAR, resolveRank(target), callerId_global, MPI_COMM_WORLD, &r_handles[callerId*2]);
-	//printf("[node %d]sending to rank %d \n", info->nodeId,resolveRank(target));
 	MPI_Irecv(&sendrecvbuf[callerId*30+15], 15, MPI_CHAR, resolveRank(target), target, MPI_COMM_WORLD, &r_handles[callerId*2+1]);
-	//printf("[node %d]receiving from rank %d \n", info->nodeId,resolveRank(target));
 }
 
 static void __attribute__((optimize("O0"))) remoteP2P_SendRecv_Finish(int callerId, struct shared_basic * info, char *sendrecvbuf) {
 	info->core_ctrl[callerId].data[10]=sendrecvbuf[callerId*30+15+14];
-	//printf("[node %d]recvbuf:\n", info->nodeId);
-	//printbuf(&sendrecvbuf[callerId*30+15], 15);
 	if (info->core_ctrl[callerId].data[10]==REAL_TYPE) {
 		float val_float;
 		memcpy(&val_float, &sendrecvbuf[callerId*30+15+4], sizeof(float));
-		//printf("[node %d]data received has a real value:%f\n",info->nodeId, val_float);
 		memcpy(&(info->core_ctrl[callerId].data[11]), &sendrecvbuf[callerId*30+15+4], sizeof(float));
 	} else if (info->core_ctrl[callerId].data[10]==INT_TYPE) {
 		int val_int;
 		memcpy(&val_int, &sendrecvbuf[callerId*30+15+4], sizeof(int));
-		//printf("[node %d]data received has a integer value:%d\n",info->nodeId, val_int);
 		memcpy(&(info->core_ctrl[callerId].data[11]), &sendrecvbuf[callerId*30+15+4], sizeof(int));
 	} else {
 		printf("[node %d]unknown data type for received data\n",info->nodeId);
