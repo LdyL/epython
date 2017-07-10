@@ -709,13 +709,13 @@ static void __attribute__((optimize("O0"))) remoteP2P_SendRecv_Start(int callerI
 	if (sendrecvbuf[callerId*30+14]==REAL_TYPE) {
 		float val_float;
 		memcpy(&val_float, &(info->core_ctrl[callerId].data[6]), sizeof(float));
-		printf("[node %d]data to be sent to core%d has a real value:%f(Length: %dbytes)\n",info->nodeId, target, val_float, sizeof(float));
+		//printf("[node %d]data to be sent to core%d has a real value:%f(Length: %dbytes)\n",info->nodeId, target, val_float, sizeof(float));
 		//printbuf((char *)&val_float, sizeof(float));
 		memcpy(&sendrecvbuf[callerId*30+4], &val_float, sizeof(float));
 	} else if (sendrecvbuf[callerId*30+14]==INT_TYPE) {
 		int val_int;
 		memcpy(&val_int, &(info->core_ctrl[callerId].data[6]), sizeof(int));
-		printf("[node %d]data to be sent to core%d has a integer value:%d(Length: %dbytes)\n",info->nodeId, target, val_int, sizeof(int));
+		//printf("[node %d]data to be sent to core%d has a integer value:%d(Length: %dbytes)\n",info->nodeId, target, val_int, sizeof(int));
 		memcpy(&sendrecvbuf[callerId*30+4], &val_int, sizeof(int));
 	} else {
 		printf("[node %d]unsupported sending data type\n",info->nodeId);
@@ -730,9 +730,9 @@ static void __attribute__((optimize("O0"))) remoteP2P_SendRecv_Start(int callerI
 	//printbuf(&sendrecvbuf[callerId*30+15], 15);
 
 	MPI_Isend(&sendrecvbuf[callerId*30], 15, MPI_CHAR, resolveRank(target), callerId_global, MPI_COMM_WORLD, &r_handles[callerId*2]);
-	printf("[node %d]sending to rank %d \n", info->nodeId,resolveRank(target));
+	//printf("[node %d]sending to rank %d \n", info->nodeId,resolveRank(target));
 	MPI_Irecv(&sendrecvbuf[callerId*30+15], 15, MPI_CHAR, resolveRank(target), target, MPI_COMM_WORLD, &r_handles[callerId*2+1]);
-	printf("[node %d]receiving from rank %d \n", info->nodeId,resolveRank(target));
+	//printf("[node %d]receiving from rank %d \n", info->nodeId,resolveRank(target));
 }
 
 static void __attribute__((optimize("O0"))) remoteP2P_SendRecv_Finish(int callerId, struct shared_basic * info, char *sendrecvbuf) {
