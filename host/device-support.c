@@ -207,9 +207,9 @@ static void checkStatusFlagsOfCore(struct shared_basic * basicState, struct inte
 			} else {
 				int flagsend, flagrecv;
 				MPI_Test(&reqs[coreId*2], &flagsend, MPI_STATUS_IGNORE);
-				//printf("[node %d]sendrecv [send]tested with flag:%d\n", basicState->nodeId, flagsend);
+				printf("[node %d]sendrecv [send]tested with flag:%d\n", basicState->nodeId, flagsend);
 				MPI_Test(&reqs[coreId*2+1], &flagrecv, MPI_STATUS_IGNORE);
-				//printf("[node %d]sendrecv [recv]tested with flag:%d\n", basicState->nodeId, flagrecv);
+				printf("[node %d]sendrecv [recv]tested with flag:%d\n", basicState->nodeId, flagrecv);
 				if (flagsend && flagrecv) {
 					//printf("[node %d]finishing sendrecv\n", basicState->nodeId);
 					remoteP2P_SendRecv_Finish(coreId, basicState, postbox);
