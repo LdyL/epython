@@ -176,6 +176,7 @@ void monitorCores(struct shared_basic * basicState, struct interpreterconfigurat
 static void checkStatusFlagsOfCore(struct shared_basic * basicState, struct interpreterconfiguration* configuration, int coreId, MPI_Request *reqs, int * interParallellaCommInProgress, char * postbox) {
 	char updateCoreWithComplete=0;
 	if (basicState->core_ctrl[coreId].core_busy == 0) {
+		if (basicState->nodeId==1) printf("[node %d][monitor]processing local core %d\n", basicState->nodeId, coreId);
 		if (basicState->core_ctrl[coreId].core_run == 0) {
 			deactivateCore(configuration, coreId);
 			printf("[node %d]Core %d deactivated\n", basicState->nodeId, coreId);
