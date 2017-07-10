@@ -681,7 +681,7 @@ static void __attribute__((optimize("O0"))) remoteP2P_Send(int sourceId, struct 
 
 	//retrieve data from Epiphany
 	memcpy(&dest, &(info->core_ctrl[sourceId].data[0]), sizeof(int));
-	sendbuf[sourceId*30+0]=info->core_ctrl[sourceId].data[5]
+	sendbuf[sourceId*30+0]=info->core_ctrl[sourceId].data[5];
 	memcpy(&sendbuf[sourceId*30+1], &(info->core_ctrl[sourceId].data[6]), 4);
 
 	MPI_Isend(&sendbuf[sourceId*30], 5, MPI_CHAR, resolveRank(dest), sourceId_global, MPI_COMM_WORLD, &request);
