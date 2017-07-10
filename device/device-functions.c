@@ -809,6 +809,7 @@ static struct value_defn sendRecvDataWithHostProcess(struct value_defn to_send, 
 
 static struct value_defn sendRecvDataWithDeviceCore(struct value_defn to_send, int target) {
 	struct value_defn receivedData;
+  int targetId_global = target+getLargestCoreId(target)*sharedData->nodeId;
 	if (!sharedData->core_ctrl[target].active) {
 		raiseError(ERR_SEND_TO_INACTIVE_CORE);
 	} else {
@@ -819,7 +820,7 @@ static struct value_defn sendRecvDataWithDeviceCore(struct value_defn to_send, i
 		int col=target-(row*e_group_config.group_cols);
 		char * remoteMemory=(char*) e_get_global_address(row, col, sharedData->core_ctrl[target].postbox_start + (myId*6));
 		cpy(remoteMemory, communication_data, 6);
-		receivedData=recvData(target);
+		receivedData=recvData(targetId_global);
 		communication_data[5]=syncValues[target]==0 ? 255 : syncValues[target]-1;
 		while (communication_data[5] != syncValues[target]) {
 			cpy(communication_data, remoteMemory, 6);
