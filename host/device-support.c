@@ -66,8 +66,9 @@ static void raiseError(int, struct core_ctrl*);
 static void stringConcatenate(int, struct core_ctrl*);
 static void inputCoreMessage(int, struct core_ctrl*);
 static void syncNodes(struct shared_basic *);
-static void remoteP2P_Send(int, struct shared_basic*);
-static void remoteP2P_Recv(int, struct shared_basic*);
+static void remoteP2P_Send(int, struct shared_basic*, MPI_Request *, char *);
+static void remoteP2P_Recv_Start(int, struct shared_basic*, MPI_Request *, char *);
+static void remoteP2P_Recv_Finish(int, struct shared_basic*, char *);
 static void remoteP2P_SendRecv_Start(int, struct shared_basic*, MPI_Request *, char *);
 static void remoteP2P_SendRecv_Finish(int, struct shared_basic*, char *);
 static void performMathsOp(struct core_ctrl*);
@@ -193,11 +194,30 @@ static void checkStatusFlagsOfCore(struct shared_basic * basicState, struct inte
 			stringConcatenate(coreId, &basicState->core_ctrl[coreId]);
 			updateCoreWithComplete=1;
 		} else if (basicState->core_ctrl[coreId].core_command == 5) {
-			remoteP2P_Send(coreId, basicState);
-			updateCoreWithComplete=1;
+			if (!interParallellaCommInProgress[coreId]) {
+				remoteP2P_Send(coreId, basicState, reqs, postbox);
+				interParallellaCommInProgress[coreId] = 1;
+			} else {
+				int flag_send_received;
+				MPI_Test(&reqs[coreId*2], &flag_send_received, MPI_STATUS_IGNORE);
+				if (flag_send_received) {
+					interParallellaCommInProgress[coreId] = 0;
+					updateCoreWithComplete=1;
+				}
+			}
 		} else if (basicState->core_ctrl[coreId].core_command == 6) {
-			remoteP2P_Recv(coreId, basicState);
-			updateCoreWithComplete=1;
+			if (!interParallellaCommInProgress[coreId]) {
+				remoteP2P_Recv_Start(coreId, basicState, reqs, postbox);
+				interParallellaCommInProgress[coreId] = 1;
+			} else {
+				int flag_data_received;
+				MPI_Test(&reqs[coreId*2+1], &flag_data_received, MPI_STATUS_IGNORE);
+				if (flag_data_received) {
+					remoteP2P_Recv_Finish(coreId, basicState, postbox);
+					interParallellaCommInProgress[coreId] = 0;
+					updateCoreWithComplete=1;
+				}
+			}
 		} else if (basicState->core_ctrl[coreId].core_command == 7) {
 			//if (basicState->nodeId==1) printf("[node %d]processing command 7 [inProgres flag:%d]\n", basicState->nodeId, interParallellaCommInProgress[coreId]);
 			if (!interParallellaCommInProgress[coreId]) {
@@ -653,48 +673,43 @@ static void __attribute__((optimize("O0"))) syncNodes(struct shared_basic * info
 /**
  * Provisional remote point-to-point communication function: SEND
  */
-static void __attribute__((optimize("O0"))) remoteP2P_Send(int sourceId, struct shared_basic * info) {
+static void __attribute__((optimize("O0"))) remoteP2P_Send(int sourceId, struct shared_basic * info, MPI_Request *r_handles, char *sendbuf) {
 	int dest, sourceId_global;
-	int val;
-	int myid;
-	int sendbuf[3];
+	int receipt;
+	MPI_Request request;
 	sourceId_global = TOTAL_CORES*info->nodeId + sourceId;
-
-	MPI_Comm_rank(MPI_COMM_WORLD, &myid);
 
 	//retrieve data from Epiphany
 	memcpy(&dest, &(info->core_ctrl[sourceId].data[0]), sizeof(int));
-	memcpy(&val, &(info->core_ctrl[sourceId].data[6]), sizeof(int));
+	sendbuf[sourceId*30+0]=info->core_ctrl[sourceId].data[5]
+	memcpy(&sendbuf[sourceId*30+1], &(info->core_ctrl[sourceId].data[6]), 4);
 
-	//send data to another Parallella
-	memcpy(&sendbuf[0], &dest, sizeof(int));
-	memcpy(&sendbuf[1], &val, sizeof(int));
-	memcpy(&sendbuf[2], &sourceId_global, sizeof(int));
-	printf("Sending message[value:%d] from local core%d to remote core%d via host node%d\n", val, sourceId_global, dest, myid);
-	MPI_Send(sendbuf, 3, MPI_INT, resolveRank(dest), sourceId_global, MPI_COMM_WORLD);
+	MPI_Isend(&sendbuf[sourceId*30], 5, MPI_CHAR, resolveRank(dest), sourceId_global, MPI_COMM_WORLD, &request);
+	MPI_Irecv(&receipt, 1, MPI_INT, resolveRank(dest), dest, MPI_COMM_WORLD, &r_handles[sourceId*2]);
 }
 
 /**
  * Provisional remote point-to-point communication function: RECV
  */
-static void __attribute__((optimize("O0"))) remoteP2P_Recv(int destId, struct shared_basic * info) {
+static void __attribute__((optimize("O0"))) remoteP2P_Recv_Start(int destId, struct shared_basic * info, MPI_Request *r_handles, char *recvbuf) {
 	int source;
-	int var;
-	int myid;
-	int recvbuf[3];
-	int destId_global = TOTAL_CORES*info->nodeId + destId;
-	MPI_Status status;
 
-	MPI_Comm_rank(MPI_COMM_WORLD, &myid);
-
-	//receive data from other Parallellas
 	memcpy(&source, &(info->core_ctrl[destId].data[0]), sizeof(int));
-	MPI_Recv(recvbuf, 3, MPI_INT, resolveRank(source), source, MPI_COMM_WORLD, &status);
-	memcpy(&var, &recvbuf[1], sizeof(int));
-	printf("Receiving message[int:%d] from romote core%d to local core%d via host node%d\n",var, source, destId_global, myid);
+	MPI_Irecv(&recvbuf[destId*30+15], 5, MPI_CHAR, resolveRank(source), source, MPI_COMM_WORLD, &r_handles[destId*2+1]);
+}
 
-	//hand the received data to Epiphany
-	memcpy(&(info->core_ctrl[destId].data[6]), &var, sizeof(int));
+static void __attribute__((optimize("O0"))) remoteP2P_Recv_Finish(int destId, struct shared_basic * info, char *recvbuf) {
+	int source;
+	int receipt;
+	int destId_global = TOTAL_CORES*info->nodeId + destId;
+	MPI_Request request;
+
+  memcpy(&source, &(info->core_ctrl[destId].data[0]), sizeof(int));
+
+	info->core_ctrl[destId].data[5] = recvbuf[destId*30+15];
+	memcpy(&info->core_ctrl[destId].data[6], &recvbuf[destId*30+15+1], 4);
+
+	MPI_Isend(&receipt, 1, MPI_INT, resolveRank(source), destId_global, MPI_COMM_WORLD, &request);
 }
 
 /**
