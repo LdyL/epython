@@ -176,7 +176,7 @@ void monitorCores(struct shared_basic * basicState, struct interpreterconfigurat
 static void checkStatusFlagsOfCore(struct shared_basic * basicState, struct interpreterconfiguration* configuration, int coreId, MPI_Request *reqs, int * interParallellaCommInProgress, char * postbox) {
 	char updateCoreWithComplete=0;
 	if (basicState->core_ctrl[coreId].core_busy == 0) {
-		if (basicState->nodeId==1) printf("[node %d][monitor]processing local core %d with command[%d]\n", basicState->nodeId, coreId, basicState->core_ctrl[coreId].core_command);
+		//if (basicState->nodeId==1) printf("[node %d][monitor]processing local core %d with command[%d]\n", basicState->nodeId, coreId, basicState->core_ctrl[coreId].core_command);
 		if (basicState->core_ctrl[coreId].core_run == 0) {
 			deactivateCore(configuration, coreId);
 			printf("[node %d]Core %d deactivated\n", basicState->nodeId, coreId);
@@ -199,9 +199,9 @@ static void checkStatusFlagsOfCore(struct shared_basic * basicState, struct inte
 			remoteP2P_Recv(coreId, basicState);
 			updateCoreWithComplete=1;
 		} else if (basicState->core_ctrl[coreId].core_command == 7) {
-			if (basicState->nodeId==1) printf("[node %d]processing command 7 [inProgres flag:%d]\n", basicState->nodeId, interParallellaCommInProgress[coreId]);
+			//if (basicState->nodeId==1) printf("[node %d]processing command 7 [inProgres flag:%d]\n", basicState->nodeId, interParallellaCommInProgress[coreId]);
 			if (!interParallellaCommInProgress[coreId]) {
-				printf("[node %d]starting sendrecv\n", basicState->nodeId);
+				//printf("[node %d]starting sendrecv\n", basicState->nodeId);
 				remoteP2P_SendRecv_Start(coreId, basicState, reqs, postbox);
 				//printf("[node %d]starting sendrecv done!\n", basicState->nodeId);
 				interParallellaCommInProgress[coreId] = 1;
@@ -214,7 +214,7 @@ static void checkStatusFlagsOfCore(struct shared_basic * basicState, struct inte
 				if (flagsend && flagrecv) {
 					//printf("[node %d]finishing sendrecv\n", basicState->nodeId);
 					remoteP2P_SendRecv_Finish(coreId, basicState, postbox);
-					printf("[node %d]sendrecv finished!\n", basicState->nodeId);
+					//printf("[node %d]sendrecv finished!\n", basicState->nodeId);
 					interParallellaCommInProgress[coreId] = 0;
 					updateCoreWithComplete=1;
 				}
@@ -647,7 +647,7 @@ static void __attribute__((optimize("O0"))) syncNodes(struct shared_basic * info
 		MPI_Send(&sendSignal, 1, MPI_INT, 0, BARRIER_SIG, MPI_COMM_WORLD);
 		MPI_Recv(&recvSignal, 1, MPI_INT, 0, BARRIER_SIG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 	}
-	printf("[node %d]Sync finished!\n", info->nodeId);
+	//printf("[node %d]Sync finished!\n", info->nodeId);
 }
 
 /**
