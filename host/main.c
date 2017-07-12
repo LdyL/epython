@@ -138,11 +138,9 @@ int main (int argc, char *argv[]) {
 		finaliseCores();
 #endif
 	}
-	printf("Just before Host MPI Finalize\n");
 	free(configuration->intentActive);
 	free(configuration);
 	MPI_Finalize();
-	printf("Epython Finalises\n");
 	return 0;
 }
 
@@ -165,7 +163,6 @@ static void doParse(char * contents) {
 static void* runCodeOnEpiphany(void * raw_wrapper) {
 	struct epiphanyMonitorThreadWrapper * wrapper=(struct epiphanyMonitorThreadWrapper*) raw_wrapper;
 	monitorCores(wrapper->deviceState, wrapper->configuration);
-	printf("runCodeOnEpiphany Ready to return\n");
 	return NULL;
 }
 #endif

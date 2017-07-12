@@ -168,7 +168,6 @@ void monitorCores(struct shared_basic * basicState, struct interpreterconfigurat
 			}
 		}
 	}
-	printf("[node %d]Monitor exit\n", basicState->nodeId);
 }
 
 /**
