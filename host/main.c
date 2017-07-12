@@ -92,7 +92,8 @@ static void* runCodeOnEpiphany(void*);
  * Host program entry point, bootstraps reading configuration, lexing & parsing (if applicable) and running the code
  */
 int main (int argc, char *argv[]) {
-	MPI_Init(&argc, &argv);
+	int prov;
+	MPI_Init_thread(&argc, &argv, MPI_THREAD_SERIALIZED, &prov);
 	srand((unsigned) time(NULL) * getpid());
 	struct interpreterconfiguration* configuration=readConfiguration(argc, argv);
 	if (configuration->filename != NULL) {
@@ -116,15 +117,10 @@ int main (int argc, char *argv[]) {
 		w->configuration=configuration;
 		w->deviceState=deviceState;
 		pthread_create(&epiphany_management_thread, NULL, runCodeOnEpiphany, (void*)w);
-		printf("[node %d]pthread created\n", deviceState->nodeId);
 		if (configuration->fullPythonHost) {
-			printf("[node %d]runFullPythonInteractivityOnHost\n", deviceState->nodeId);
 			runFullPythonInteractivityOnHost(configuration, deviceState, &epiphany_management_thread);
-			printf("[node %d]runFullPythonInteractivityOnHost Finished\n", deviceState->nodeId);
 		} else {
-			printf("[node %d]runCodeOnHost\n", deviceState->nodeId);
 			runCodeOnHost(configuration, deviceState);
-			printf("[node %d]runCodeOnHost Finished\n", deviceState->nodeId);
 		}
 #else
 		struct shared_basic * standAloneState=(struct shared_basic*) malloc(sizeof(struct shared_basic));
@@ -137,7 +133,7 @@ int main (int argc, char *argv[]) {
 			runCodeOnHost(configuration, standAloneState);
 		}
 #endif
-		pthread_exit(NULL);
+		pthread_join(epiphany_management_thread, NULL);
 #ifndef HOST_STANDALONE
 		finaliseCores();
 #endif
