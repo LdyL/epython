@@ -163,7 +163,6 @@ void monitorCores(struct shared_basic * basicState, struct interpreterconfigurat
 
 	while (totalActive > 0) {
 		for (i=0;i<TOTAL_CORES;i++) {
-			printf("[node %d][monitor]got command %d from core %d [flag busy:%d, run:%d, active:%d]\n", basicState->nodeId, basicState->core_ctrl[i].core_command, i, basicState->core_ctrl[i].core_busy, basicState->core_ctrl[i].core_run, active[i]);
 			if (active[i]) {
 				checkStatusFlagsOfCore(basicState, configuration, i, requests, commStatus, Parallella_postbox);
 			}
