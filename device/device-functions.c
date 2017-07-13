@@ -169,7 +169,7 @@ void callNativeFunction(struct value_defn * value, unsigned char fnIdentifier, i
         }
     } else if (fnIdentifier==NATIVE_FN_RTL_REDUCE) {
         if (numArgs != 2) raiseError(ERR_INCORRECT_NUM_NATIVE_PARAMS);
-        *value=reduceData(parameters[0], getInt(parameters[1].data), numActiveCores);
+        *value=reduceData(parameters[0], getInt(parameters[1].data), numActiveCores*sharedData->num_nodes);
     } else if (fnIdentifier==NATIVE_FN_RTL_ALLOCARRAY || fnIdentifier==NATIVE_FN_RTL_ALLOCSHAREDARRAY) {
         int totalDataSize=1, i;
         for (i=0;i<numArgs;i++) {
@@ -784,10 +784,8 @@ static struct value_defn recvDataFromDeviceCore(int source) {
 static struct value_defn sendRecvData(struct value_defn to_send, int target) {
 	if (to_send.type == STRING_TYPE) raiseError(ERR_ONLY_SEND_INT_AND_REAL);
 	if (isLocal(target)) {
-    //if(sharedData->nodeId==1) raiseError(ERR_CHECK_POINT);
 		return sendRecvDataWithDeviceCore(to_send, target-getLargestCoreId(target)*sharedData->nodeId);
 	} else {
-    //if(sharedData->nodeId==1) raiseError(ERR_CHECK_POINT);
 		return sendRecvDataWithHostProcess(to_send, target);
 	}
 }
@@ -939,10 +937,10 @@ static struct value_defn reduceData(struct value_defn to_send, int rop, int tota
 		cpy(&floatV, to_send.data, sizeof(int));
 	}
 	syncCores(1);
-	for (i=0;i<TOTAL_CORES && totalActioned<totalProcesses;i++) {
+	for (i=0;i<TOTAL_CORES*sharedData->num_nodes && totalActioned<totalProcesses;i++) {
 		if (sharedData->core_ctrl[i].active) {
 			totalActioned++;
-			if (i == myId) continue;
+			if (i == myId+sharedData->nodeId*TOTAL_CORES) continue;
 			retrieved=sendRecvData(to_send, i);
 			if (to_send.type==INT_TYPE) {
 				cpy(&tempInt, retrieved.data, sizeof(int));
