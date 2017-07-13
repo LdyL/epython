@@ -163,7 +163,6 @@ void monitorCores(struct shared_basic * basicState, struct interpreterconfigurat
 
 	while (totalActive > 0) {
 		for (i=0;i<TOTAL_CORES;i++) {
-			printf("core %d[%hu]\n", i, active[i]);
 			if (active[i]) {
 				checkStatusFlagsOfCore(basicState, configuration, i, requests, commStatus, Parallella_postbox);
 			}
@@ -176,6 +175,11 @@ void monitorCores(struct shared_basic * basicState, struct interpreterconfigurat
  */
 static void checkStatusFlagsOfCore(struct shared_basic * basicState, struct interpreterconfiguration* configuration, int coreId, MPI_Request *reqs, int * interParallellaCommInProgress, char * postbox) {
 	char updateCoreWithComplete=0;
+	printf("[node %d][monitor]got command %d from core %d [flag busy:%d, run:%d]\n", basicState->nodeId, basicState->core_ctrl[coreId].core_command, coreId, basicState->core_ctrl[coreId].core_busy, basicState->core_ctrl[coreId].core_run);
+	for (i=0;i<TOTAL_CORES;i++) {
+		printf("%d ", active[i]);
+	}
+	printf("\n")
 	if (basicState->core_ctrl[coreId].core_busy == 0) {
 		if (basicState->core_ctrl[coreId].core_run == 0) {
 			deactivateCore(configuration, coreId);
