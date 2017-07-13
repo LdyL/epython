@@ -176,7 +176,7 @@ void monitorCores(struct shared_basic * basicState, struct interpreterconfigurat
 static void checkStatusFlagsOfCore(struct shared_basic * basicState, struct interpreterconfiguration* configuration, int coreId, MPI_Request *reqs, int * interParallellaCommInProgress, char * postbox) {
 	char updateCoreWithComplete=0;
 	int i;
-	printf("[node %d][monitor]got command %d from core %d [flag busy:%d, run:%d]\n", basicState->nodeId, basicState->core_ctrl[coreId].core_command, coreId, basicState->core_ctrl[coreId].core_busy, basicState->core_ctrl[coreId].core_run);
+	printf("[node %d][monitor]got command [%d] from core %d\n", basicState->nodeId, basicState->core_ctrl[coreId].core_command, coreId);
 	for (i=0;i<TOTAL_CORES;i++) {
 		printf("%d ", active[i]);
 	}
@@ -226,7 +226,7 @@ static void checkStatusFlagsOfCore(struct shared_basic * basicState, struct inte
 				remoteP2P_SendRecv_Start(coreId, basicState, reqs, postbox);
 				int targetC;
 				memcpy(&targetC, &(basicState->core_ctrl[coreId].data[0]), sizeof(int));
-				printf("[node %d]sendrecv between core %d(local) and %d(target) start!\n", basicState->nodeId, coreId+TOTAL_CORES*basicState->nodeId, targetC);
+				//printf("[node %d]sendrecv between core %d(local) and %d(target) start!\n", basicState->nodeId, coreId+TOTAL_CORES*basicState->nodeId, targetC);
 				interParallellaCommInProgress[coreId] = 1;
 			} else {
 				int flagsend, flagrecv;

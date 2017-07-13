@@ -938,9 +938,9 @@ static struct value_defn reduceData(struct value_defn to_send, int rop, int tota
 	}
 	syncCores(1);
 	for (i=0;i<TOTAL_CORES*sharedData->num_nodes && totalActioned<totalProcesses;i++) {
-    if (16==myId+sharedData->nodeId*TOTAL_CORES) raiseError(ERR_CHECK_POINT_A);
+    //if (16==myId+sharedData->nodeId*TOTAL_CORES) raiseError(ERR_CHECK_POINT_A);
 		if (sharedData->core_ctrl[i].active || i>=TOTAL_CORES) {
-      if (16==myId+sharedData->nodeId*TOTAL_CORES) raiseError(ERR_CHECK_POINT_B);
+      //if (16==myId+sharedData->nodeId*TOTAL_CORES) raiseError(ERR_CHECK_POINT_B);
 			totalActioned++;
 			if (i == myId+sharedData->nodeId*TOTAL_CORES) continue;
 			retrieved=sendRecvData(to_send, i);
