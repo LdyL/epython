@@ -109,8 +109,11 @@ char* translateErrorCodeToMessage(unsigned char errorCode) {
     case ERR_NBSEND_NOT_SUPPORTED:
         errorMessage="Non-blocking sends between device and virtual cores on the host are not yet supported";
         break;
-    case ERR_CHECK_POINT:
-        errorMessage="***** Check Point ! *****";
+    case ERR_CHECK_POINT_A:
+        errorMessage="***** Check Point ! (A)*****";
+        break;
+    case ERR_CHECK_POINT_B:
+        errorMessage="***** Check Point ! (B)*****";
         break;
     }
     if (errorMessage != NULL) {
