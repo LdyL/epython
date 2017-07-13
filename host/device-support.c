@@ -163,6 +163,7 @@ void monitorCores(struct shared_basic * basicState, struct interpreterconfigurat
 
 	while (totalActive > 0) {
 		for (i=0;i<TOTAL_CORES;i++) {
+			printf("[node %d]core %d [flag busy:%d, run:%d, active:%d]\n", basicState->nodeId,  i, basicState->core_ctrl[i].core_busy, basicState->core_ctrl[i].core_run, active[i]);
 			if (active[i]) {
 				checkStatusFlagsOfCore(basicState, configuration, i, requests, commStatus, Parallella_postbox);
 			}
@@ -226,7 +227,7 @@ static void checkStatusFlagsOfCore(struct shared_basic * basicState, struct inte
 				int flagsend, flagrecv;
 				MPI_Test(&reqs[coreId*2], &flagsend, MPI_STATUS_IGNORE);
 				MPI_Test(&reqs[coreId*2+1], &flagrecv, MPI_STATUS_IGNORE);
-				printf("[node %d]processing core %d's sendrecv request with testflag[%d,%d]\n", basicState->nodeId, coreId, flagsend, flagrecv);
+				//printf("[node %d]processing core %d's sendrecv request with testflag[%d,%d]\n", basicState->nodeId, coreId, flagsend, flagrecv);
 				if (flagsend && flagrecv) {
 					remoteP2P_SendRecv_Finish(coreId, basicState, postbox);
 					int targetCore;
