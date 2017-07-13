@@ -225,6 +225,9 @@ static void checkStatusFlagsOfCore(struct shared_basic * basicState, struct inte
 				MPI_Test(&reqs[coreId*2+1], &flagrecv, MPI_STATUS_IGNORE);
 				if (flagsend && flagrecv) {
 					remoteP2P_SendRecv_Finish(coreId, basicState, postbox);
+					int targetCore;
+					memcpy(&targetCore, &(basicState->core_ctrl[coreId].data[0]), sizeof(int));
+					printf("[node %d]sendrecv between core %d(local) and %d(target) completed!\n", basicState->nodeId, coreId+TOTAL_CORES*basicState->nodeId, targetCore);
 					interParallellaCommInProgress[coreId] = 0;
 					updateCoreWithComplete=1;
 				}
