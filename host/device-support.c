@@ -226,6 +226,7 @@ static void checkStatusFlagsOfCore(struct shared_basic * basicState, struct inte
 				int flagsend, flagrecv;
 				MPI_Test(&reqs[coreId*2], &flagsend, MPI_STATUS_IGNORE);
 				MPI_Test(&reqs[coreId*2+1], &flagrecv, MPI_STATUS_IGNORE);
+				printf("[node %d]processing core %d's sendrecv request with testflag[%d,%d]\n", basicState->nodeId, flagsend, flagrecv);
 				if (flagsend && flagrecv) {
 					remoteP2P_SendRecv_Finish(coreId, basicState, postbox);
 					int targetCore;
