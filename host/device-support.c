@@ -163,7 +163,7 @@ void monitorCores(struct shared_basic * basicState, struct interpreterconfigurat
 
 	while (totalActive > 0) {
 		for (i=0;i<TOTAL_CORES;i++) {
-			printf("[node %d]core %d[%d]\n", basicState->nodeId,i,active[i]);
+			printf("core %d[%d]\n", i, active[i]);
 			if (active[i]) {
 				checkStatusFlagsOfCore(basicState, configuration, i, requests, commStatus, Parallella_postbox);
 			}
