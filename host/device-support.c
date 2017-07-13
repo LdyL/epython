@@ -179,7 +179,7 @@ static void checkStatusFlagsOfCore(struct shared_basic * basicState, struct inte
 	for (i=0;i<TOTAL_CORES;i++) {
 		printf("%d ", active[i]);
 	}
-	printf("\n")
+	printf("\n");
 	if (basicState->core_ctrl[coreId].core_busy == 0) {
 		if (basicState->core_ctrl[coreId].core_run == 0) {
 			deactivateCore(configuration, coreId);
