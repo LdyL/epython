@@ -65,12 +65,13 @@ static void displayCoreMessage(int, struct core_ctrl*);
 static void raiseError(int, struct core_ctrl*);
 static void stringConcatenate(int, struct core_ctrl*);
 static void inputCoreMessage(int, struct core_ctrl*);
-static void syncNodes(struct shared_basic *);
+static void syncNodes(struct shared_basic*);
 static void remoteP2P_Send(int, struct shared_basic*, MPI_Request *, char *);
 static void remoteP2P_Recv_Start(int, struct shared_basic*, MPI_Request *, char *);
 static void remoteP2P_Recv_Finish(int, struct shared_basic*, char *);
 static void remoteP2P_SendRecv_Start(int, struct shared_basic*, MPI_Request *, char *);
 static void remoteP2P_SendRecv_Finish(int, struct shared_basic*, char *);
+static void performReduceOp(struct shared_basic*, int);
 static void performMathsOp(struct core_ctrl*);
 static int getTypeOfInput(char*);
 static int resolveRank(int);
@@ -242,6 +243,9 @@ static void checkStatusFlagsOfCore(struct shared_basic * basicState, struct inte
 					updateCoreWithComplete=1;
 				}
 			}
+		} else if (basicState->core_ctrl[coreId].core_command == 9) {
+			performReduceOp(basicState, coreId);
+			updateCoreWithComplete=1;
 		} else if (basicState->core_ctrl[coreId].core_command == 10) {
 			syncNodes(basicState);
 			updateCoreWithComplete=1;
@@ -649,6 +653,70 @@ static void timeval_subtract(struct timeval *result, struct timeval *x,  struct 
   result->tv_usec = x->tv_usec - y->tv_usec;
 }
 
+
+/**
+ * Perform REDUCE among all nodes of Parallella cluster
+ */
+static void __attribute__((optimize("O0"))) performReduceOp(struct shared_basic * info, int coreId) {
+	int i, op;
+	int size, myid;
+	int recv_int, temp_int, local_int;
+	float recv_real, temp_real, local_real;
+
+	size = info->num_nodes;
+	myid = info->nodeId;
+
+	//handle integers
+	if (info->core_ctrl[coreId].data[4]==INT_TYPE){
+		memcpy(&local_int, info->core_ctrl[coreId].data, sizeof(int));
+		if (myid==0) {
+				temp_int = local_int;
+				memcpy(&op, &info->core_ctrl[coreId].data[10], sizeof(int));
+				for (i=1; i<size; i++) {
+					MPI_Recv(&recv_int, 1, MPI_INT, i, REDUCE_SIG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+					if (op==0) temp_int+=recv_int;
+					if (op==1 && recv_int < temp_int) temp_int=recv_int;
+					if (op==2 && recv_int > temp_int) temp_int=recv_int;
+					if (op==3) temp_int*=recv_int;
+				}
+				for (i=1; i<size; i++) {
+					MPI_Send(&temp_int, 1, MPI_INT, i, REDUCE_SIG, MPI_COMM_WORLD);
+				}
+				memcpy(&info->core_ctrl[coreId].data[5], &temp_int, sizeof(int));
+				info->core_ctrl[coreId].data[9]=info->core_ctrl[coreId].data[4];
+		}	else {
+			MPI_Send(&local_int, 1, MPI_INT, 0, REDUCE_SIG, MPI_COMM_WORLD);
+			MPI_Recv(&recv_int, 1, MPI_INT, 0, REDUCE_SIG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+			memcpy(&info->core_ctrl[coreId].data[5], &recv_int, sizeof(int));
+			info->core_ctrl[coreId].data[9]=INT_TYPE;
+		}
+	//handel float point numbers
+	} else if (info->core_ctrl[coreId].data[4]==REAL_TYPE) {
+		memcpy(&local_real, info->core_ctrl[coreId].data, sizeof(float));
+		if (myid==0) {
+				temp_real = local_real;
+				memcpy(&op, &info->core_ctrl[coreId].data[10], sizeof(int));
+				for (i=1; i<size; i++) {
+					MPI_Recv(&recv_real, 1, MPI_FLOAT, i, REDUCE_SIG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+					if (op==0) temp_real+=recv_real;
+					if (op==1 && recv_real < temp_real) temp_real=recv_real;
+					if (op==2 && recv_int > temp_real) temp_real=recv_real;
+					if (op==3) temp_real*=recv_real;
+				}
+				for (i=1; i<size; i++) {
+					MPI_Send(&temp_real, 1, MPI_FLOAT, i, REDUCE_SIG, MPI_COMM_WORLD);
+				}
+				memcpy(&info->core_ctrl[coreId].data[5], &temp_real, sizeof(float));
+				info->core_ctrl[coreId].data[9]=info->core_ctrl[coreId].data[4];
+		}	else {
+			MPI_Send(&local_real, 1, MPI_FLOAT, 0, REDUCE_SIG, MPI_COMM_WORLD);
+			MPI_Recv(&recv_real, 1, MPI_INT, 0, REDUCE_SIG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+			memcpy(&info->core_ctrl[coreId].data[5], &recv_real, sizeof(float));
+			info->core_ctrl[coreId].data[9]=REAL_TYPE;
+		}
+	}
+}
+
 /**
  * Synchronises all nodes of Parallella cluster
  */
@@ -670,7 +738,6 @@ static void __attribute__((optimize("O0"))) syncNodes(struct shared_basic * info
 		MPI_Send(&sendSignal, 1, MPI_INT, 0, BARRIER_SIG, MPI_COMM_WORLD);
 		MPI_Recv(&recvSignal, 1, MPI_INT, 0, BARRIER_SIG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 	}
-	//printf("[node %d]Sync finished!\n", info->nodeId);
 }
 
 /**

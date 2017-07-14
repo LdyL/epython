@@ -39,6 +39,7 @@ static struct value_defn recvData(int);
 static struct value_defn sendRecvData(struct value_defn, int);
 static struct value_defn bcastData(struct value_defn, int, int);
 static struct value_defn reduceData(struct value_defn, int, int);
+static struct value_defn reduceData_remote(struct value_defn, int, volatile e_barrier_t[], e_barrier_t*[]);
 static struct value_defn getInputFromUser(void);
 static struct value_defn getInputFromUserWithString(struct value_defn, int, struct symbol_node*);
 static void displayToUser(struct value_defn, int, struct symbol_node*);
@@ -942,8 +943,9 @@ static struct value_defn reduceData(struct value_defn to_send, int rop, int tota
 		if (sharedData->core_ctrl[i].active || i>=TOTAL_CORES) {
       //if (16==myId+sharedData->nodeId*TOTAL_CORES) raiseError(ERR_CHECK_POINT_B);
 			totalActioned++;
-			if (i == myId+sharedData->nodeId*TOTAL_CORES) continue;
-			retrieved=sendRecvData(to_send, i);
+			if (i == myId) continue;
+      //passing global core id required by sendRecvData() but actually, this sendrecv only performs locally
+			retrieved=sendRecvData(to_send, i+getLargestCoreId(i)*sharedData->nodeId);
 			if (to_send.type==INT_TYPE) {
 				cpy(&tempInt, retrieved.data, sizeof(int));
 				if (rop==0) intV+=tempInt;
@@ -966,7 +968,56 @@ static struct value_defn reduceData(struct value_defn to_send, int rop, int tota
 	} else {
 		cpy(returnValue.data, &floatV, sizeof(float));
 	}
+
+  if (sharedData->num_nodes > 1) {
+    returnValue = reduceData_remote(returnValue, rop, syncbarriers, sync_tgt_bars);
+  }
 	return returnValue;
+}
+
+/**
+ * Reduction of data amongst the cores with some operator
+ */
+static struct value_defn reduceData_remote(struct value_defn reduceValue, int rrop, volatile e_barrier_t barrier_array[], e_barrier_t  * target_barrier_array[]) {
+  struct value_defn returnValue_remote;
+  //start a internal barrier amongst local cores
+  if (myId == lowestCoreId) {
+		int i;
+		barrier_array[myId] = 1;
+		// poll on all slots on local Epiphany
+		for (i=1; i<TOTAL_CORES; i++) {
+			if (sharedData->core_ctrl[i].active) while (barrier_array[i] == 0) {};
+		}
+		for (i=0; i<TOTAL_CORES; i++) {
+			if (sharedData->core_ctrl[i].active) barrier_array[i] = 0;
+		}
+
+    //reduce operation with remote Epiphany cores (send request to host and waiting)
+    cpy(sharedData->core_ctrl[myId].data, reduceValue.data, 4);
+    sharedData->core_ctrl[myId].data[4]=reduceValue.type;
+    cpy(&sharedData->core_ctrl[myId].data[10], &rrop, 4);
+
+    unsigned int pb=sharedData->core_ctrl[myId].core_busy;
+    sharedData->core_ctrl[myId].core_command=9;
+    sharedData->core_ctrl[myId].core_busy=0;
+    while (sharedData->core_ctrl[myId].core_busy==0 || sharedData->core_ctrl[myId].core_busy<=pb) { }
+
+    cpy(returnValue_remote.data, &sharedData->core_ctrl[myId].data[5], 4);
+    returnValue_remote.type=sharedData->core_ctrl[myId].data[9];
+    returnValue_remote.dtype=SCALAR;
+
+		// release local ecores and Broadcasts reduced value to them
+		for (i=1; i<TOTAL_CORES; i++) {
+			if (sharedData->core_ctrl[i].active) *(target_barrier_array[i]) = 1;
+      sendDataToDeviceCore(returnValue_remote, i, 1);
+		}
+    return returnValue_remote;
+	} else {
+		*(target_barrier_array[0]) = 1;
+		while (barrier_array[0] == 0) {};
+		barrier_array[0] = 0;
+    return recvDataFromDeviceCore(lowestCoreId);
+	}
 }
 
 /**
