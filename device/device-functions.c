@@ -38,6 +38,8 @@ static void sendData(struct value_defn, int, char);
 static struct value_defn recvData(int);
 static struct value_defn sendRecvData(struct value_defn, int);
 static struct value_defn bcastData(struct value_defn, int, int);
+static void bcastSender(struct value_defn, int);
+static struct value_defn bcastReceiver(struct value_defn, int, volatile e_barrier_t[], e_barrier_t*[]);
 static struct value_defn reduceData(struct value_defn, int, int);
 static struct value_defn reduceData_remote(struct value_defn, int, volatile e_barrier_t[], e_barrier_t*[]);
 static struct value_defn getInputFromUser(void);
@@ -910,20 +912,86 @@ static void performBarrier_remote(volatile e_barrier_t barrier_array[], e_barrie
  * Broadcasts data, if this is the source then send it, all cores return the data (even the source)
  */
 static struct value_defn bcastData(struct value_defn to_send, int source, int totalProcesses) {
-	if (myId==source) {
-		int i, totalActioned=0;
-		for (i=0;i<TOTAL_CORES && totalActioned<totalProcesses;i++) {
-			if (sharedData->core_ctrl[i].active) {
-				totalActioned++;
-				if (i == myId) continue;
-				sendData(to_send, i, 1);
-			}
-		}
-		return to_send;
-	} else {
-		return recvData(source);
-	}
+  int myId_global=myId+getLargestCoreId(myId)*sharedData->nodeId;
+  if (isLocal(source)) {
+  	if (myId_global==source) {
+      //perform remote broadcast send first
+      if (sharedData->num_nodes > 1) bcastSender(to_send, myId);
+      //perform local broadcast send
+  		int i, totalActioned=0;
+  		for (i=0;i<TOTAL_CORES && totalActioned<totalProcesses;i++) {
+  			if (sharedData->core_ctrl[i].active) {
+  				totalActioned++;
+  				if (i == myId) continue;
+  				sendData(to_send, i+getLargestCoreId(i)*sharedData->nodeId, 1);
+  			}
+  		}
+  		return to_send;
+  	} else {
+      //perform local broadcast recv
+  		return recvData(source);
+  	}
+  } else {
+    return bcastReceiver(to_send, source, syncbarriers, sync_tgt_bars);
+  }
 }
+
+/**
+ * Remote_bcast Sender (send data to host)
+ */
+static void bcastSender(struct value_defn to_bcast, int id) {
+  cpy(sharedData->core_ctrl[id].data, to_bcast.data, 4);
+  sharedData->core_ctrl[id].data[4]=to_bcast.type;
+  sharedData->core_ctrl[id].data[5]=BCAST_SENDER;
+  //send request to host
+  unsigned int pb=sharedData->core_ctrl[id].core_busy;
+  sharedData->core_ctrl[id].core_command=11;
+  sharedData->core_ctrl[id].core_busy=0;
+  while (sharedData->core_ctrl[id].core_busy==0 || sharedData->core_ctrl[id].core_busy<=pb) { }
+}
+
+ /**
+  * Remote_bcast Receiver (receive remote data from host and return the received data)
+  */
+static struct value_defn bcastReceiver(struct value_defn to_recv, int source, volatile e_barrier_t barrier_array[], e_barrier_t * target_barrier_array[]) {
+  struct value_defn recvValue;
+  if (myId == lowestCoreId) {
+    //Synchronises with local cores
+    int i;
+		barrier_array[myId] = 1;
+		for (i=1; i<TOTAL_CORES; i++) {
+			if (sharedData->core_ctrl[i].active) while (barrier_array[i] == 0) {};
+		}
+		for (i=0; i<TOTAL_CORES; i++) {
+			if (sharedData->core_ctrl[i].active) barrier_array[i] = 0;
+		}
+    //prepare data to be sent with request
+    cpy(sharedData->core_ctrl[myId].data, &source, sizeof(int));
+    sharedData->core_ctrl[myId].data[4]=to_recv.type;
+    sharedData->core_ctrl[myId].data[5]=BCAST_RECEIVER;
+    //send request to host
+    unsigned int pb=sharedData->core_ctrl[myId].core_busy;
+    sharedData->core_ctrl[myId].core_command=11;
+    sharedData->core_ctrl[myId].core_busy=0;
+    while (sharedData->core_ctrl[myId].core_busy==0 || sharedData->core_ctrl[myId].core_busy<=pb) { }
+    //receive value from host
+    cpy(recvValue.data, sharedData->core_ctrl[myId].data[6], 4);
+    recvValue.type=sharedData->core_ctrl[myId].data[10];
+    recvValue.dtype=SCALAR;
+    //release local ecores and broadcast received value to them
+		for (i=1; i<TOTAL_CORES; i++) {
+			if (sharedData->core_ctrl[i].active) *(target_barrier_array[i]) = 1;
+      sendDataToDeviceCore(recvValue, i, 1);
+		}
+    return recvValue;
+  } else {
+    *(target_barrier_array[0]) = 1;
+    while (barrier_array[0] == 0) {};
+    barrier_array[0] = 0;
+    return recvDataFromDeviceCore(lowestCoreId);
+  }
+}
+
 
 /**
  * Reduction of data amongst the cores with some operator
@@ -976,7 +1044,7 @@ static struct value_defn reduceData(struct value_defn to_send, int rop, int tota
 /**
  * Reduction of data amongst the cores with some operator
  */
-static struct value_defn reduceData_remote(struct value_defn reduceValue, int rrop, volatile e_barrier_t barrier_array[], e_barrier_t  * target_barrier_array[]) {
+static struct value_defn reduceData_remote(struct value_defn reduceValue, int rrop, volatile e_barrier_t barrier_array[], e_barrier_t * target_barrier_array[]) {
   struct value_defn returnValue_remote;
   //start a internal barrier amongst local cores
   if (myId == lowestCoreId) {
@@ -1004,7 +1072,7 @@ static struct value_defn reduceData_remote(struct value_defn reduceValue, int rr
     returnValue_remote.type=sharedData->core_ctrl[myId].data[9];
     returnValue_remote.dtype=SCALAR;
 
-		// release local ecores and Broadcasts reduced value to them
+		//release local ecores and broadcast reduced value to them
 		for (i=1; i<TOTAL_CORES; i++) {
 			if (sharedData->core_ctrl[i].active) *(target_barrier_array[i]) = 1;
       sendDataToDeviceCore(returnValue_remote, i, 1);

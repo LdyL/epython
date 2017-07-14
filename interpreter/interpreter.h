@@ -50,6 +50,10 @@
 #define ALLOCATED 2
 #define ALIAS 3
 
+//remote broadcat identifier
+#define BCAST_SENDER 0
+#define BCAST_RECEIVER 1
+
 // The value in a symbol table; its type and data (which is integer/real or pointer to string
 // or array.) In host mode this is 8 bytes as often pointers are 64bit, but on Epiphany only 4 byte as 32 bit pointers
 struct value_defn {

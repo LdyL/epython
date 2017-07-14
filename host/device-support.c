@@ -66,6 +66,7 @@ static void raiseError(int, struct core_ctrl*);
 static void stringConcatenate(int, struct core_ctrl*);
 static void inputCoreMessage(int, struct core_ctrl*);
 static void syncNodes(struct shared_basic*);
+static void remote_Bcast(struct shared_basic*, int);
 static void remoteP2P_Send(int, struct shared_basic*, MPI_Request *, char *);
 static void remoteP2P_Recv_Start(int, struct shared_basic*, MPI_Request *, char *);
 static void remoteP2P_Recv_Finish(int, struct shared_basic*, char *);
@@ -235,6 +236,9 @@ static void checkStatusFlagsOfCore(struct shared_basic * basicState, struct inte
 			updateCoreWithComplete=1;
 		} else if (basicState->core_ctrl[coreId].core_command == 10) {
 			syncNodes(basicState);
+			updateCoreWithComplete=1;
+		} else if (basicState->core_ctrl[coreId].core_command == 11) {
+			remote_Bcast(basicState, coreId);
 			updateCoreWithComplete=1;
 		} else if (basicState->core_ctrl[coreId].core_command >= 1000) {
 			performMathsOp(&basicState->core_ctrl[coreId]);
@@ -640,6 +644,65 @@ static void timeval_subtract(struct timeval *result, struct timeval *x,  struct 
   result->tv_usec = x->tv_usec - y->tv_usec;
 }
 
+/**
+ * Synchronises all nodes of Parallella cluster
+ */
+static void __attribute__((optimize("O0"))) syncNodes(struct shared_basic * info) {
+	int i;
+	int size, myid;
+	int recvSignal, sendSignal;
+	size = info->num_nodes;
+	myid = info->nodeId;
+
+	if (myid==0) {
+		for (i=1; i<size; i++) {
+			MPI_Recv(&recvSignal, 1, MPI_INT, i, BARRIER_SIG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+		}
+		for (i=1; i<size; i++) {
+			MPI_Send(&sendSignal, 1, MPI_INT, i, BARRIER_SIG, MPI_COMM_WORLD);
+		}
+	}	else {
+		MPI_Send(&sendSignal, 1, MPI_INT, 0, BARRIER_SIG, MPI_COMM_WORLD);
+		MPI_Recv(&recvSignal, 1, MPI_INT, 0, BARRIER_SIG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+	}
+}
+
+/**
+ * Perform remote broadcast
+ */
+static void __attribute__((optimize("O0"))) remote_Bcast(struct shared_basic * info, int coreId) {
+	int i;
+	int size, myid;
+	int bcast_int;
+	float bcast_real;
+	size = info->num_nodes;
+	myid = info->nodeId;
+	int coreId_global = coreId + TOTAL_CORES*myid;
+	if (info->core_ctrl[coreId].data[5]==BCAST_SENDER) {
+		for (i=0; i<size; i++) {
+			if (i!=myid) {
+				if (info->core_ctrl[coreId].data[4]==INT_TYPE) {
+					MPI_Send(info->core_ctrl[coreId].data, 1, MPI_INT, i, coreId_global, MPI_COMM_WORLD);
+				} else if (info->core_ctrl[coreId].data[4]==REAL_TYPE) {
+					MPI_Send(info->core_ctrl[coreId].data, 1, MPI_FLOAT, i, coreId_global, MPI_COMM_WORLD);
+				}
+			}
+		}
+	}	else if (info->core_ctrl[coreId].data[5]==BCAST_RECEIVER) {
+		int source;
+		memcpy(&source, info->core_ctrl[coreId].data, sizeof(int))
+		if (info->core_ctrl[coreId].data[4]==INT_TYPE) {
+			MPI_Recv(&bcast_int, 1, MPI_INT, resolveRank(source), source, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+			memcpy(&info->core_ctrl[coreId].data[6], &bcast_int, sizeof(int));
+			info->core_ctrl[coreId].data[10]=INT_TYPE;
+		} else if (info->core_ctrl[coreId].data[4]==REAL_TYPE) {
+			MPI_Recv(&bcast_real, 1, MPI_FLOAT, resolveRank(source), source, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+			memcpy(&info->core_ctrl[coreId].data[6], &bcast_real, sizeof(float));
+			info->core_ctrl[coreId].data[10]=REAL_TYPE;
+		}
+	}
+
+}
 
 /**
  * Perform REDUCE among all nodes of Parallella cluster
@@ -701,29 +764,6 @@ static void __attribute__((optimize("O0"))) performReduceOp(struct shared_basic 
 			memcpy(&info->core_ctrl[coreId].data[5], &recv_real, sizeof(float));
 			info->core_ctrl[coreId].data[9]=REAL_TYPE;
 		}
-	}
-}
-
-/**
- * Synchronises all nodes of Parallella cluster
- */
-static void __attribute__((optimize("O0"))) syncNodes(struct shared_basic * info) {
-	int i;
-	int size, myid;
-	int recvSignal, sendSignal;
-	size = info->num_nodes;
-	myid = info->nodeId;
-
-	if (myid==0) {
-		for (i=1; i<size; i++) {
-			MPI_Recv(&recvSignal, 1, MPI_INT, i, BARRIER_SIG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-		}
-		for (i=1; i<size; i++) {
-			MPI_Send(&sendSignal, 1, MPI_INT, i, BARRIER_SIG, MPI_COMM_WORLD);
-		}
-	}	else {
-		MPI_Send(&sendSignal, 1, MPI_INT, 0, BARRIER_SIG, MPI_COMM_WORLD);
-		MPI_Recv(&recvSignal, 1, MPI_INT, 0, BARRIER_SIG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 	}
 }
 
