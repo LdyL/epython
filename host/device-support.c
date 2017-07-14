@@ -669,16 +669,16 @@ static void __attribute__((optimize("O0"))) performReduceOp(struct shared_basic 
 				for (i=1; i<size; i++) {
 					MPI_Send(&temp_int, 1, MPI_INT, i, REDUCE_SIG, MPI_COMM_WORLD);
 				}
-				memcpy(info->core_ctrl[coreId].data[5], &temp_int, sizeof(int));
+				memcpy(&info->core_ctrl[coreId].data[5], &temp_int, sizeof(int));
 				info->core_ctrl[coreId].data[9]=info->core_ctrl[coreId].data[4];
 		}	else {
 			MPI_Send(&local_int, 1, MPI_INT, 0, REDUCE_SIG, MPI_COMM_WORLD);
 			MPI_Recv(&recv_int, 1, MPI_INT, 0, REDUCE_SIG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-			memcpy(info->core_ctrl[coreId].data[5], &recv_int, sizeof(int));
+			memcpy(&info->core_ctrl[coreId].data[5], &recv_int, sizeof(int));
 			info->core_ctrl[coreId].data[9]=INT_TYPE;
 		}
 	//handel float point numbers
-	} else if (info->core_ctrl[sourceId].data[4]==REAL_TYPE) {
+	} else if (info->core_ctrl[coreId].data[4]==REAL_TYPE) {
 		memcpy(&local_real, info->core_ctrl[coreId].data, sizeof(float));
 		if (myid==0) {
 				temp_real = local_real;
@@ -693,12 +693,12 @@ static void __attribute__((optimize("O0"))) performReduceOp(struct shared_basic 
 				for (i=1; i<size; i++) {
 					MPI_Send(&temp_real, 1, MPI_FLOAT, i, REDUCE_SIG, MPI_COMM_WORLD);
 				}
-				memcpy(info->core_ctrl[coreId].data[5], &temp_real, sizeof(float));
+				memcpy(&info->core_ctrl[coreId].data[5], &temp_real, sizeof(float));
 				info->core_ctrl[coreId].data[9]=info->core_ctrl[coreId].data[4];
 		}	else {
 			MPI_Send(&local_real, 1, MPI_FLOAT, 0, REDUCE_SIG, MPI_COMM_WORLD);
 			MPI_Recv(&recv_real, 1, MPI_INT, 0, REDUCE_SIG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-			memcpy(info->core_ctrl[coreId].data[5], &recv_real, sizeof(int));
+			memcpy(&info->core_ctrl[coreId].data[5], &recv_real, sizeof(float));
 			info->core_ctrl[coreId].data[9]=REAL_TYPE;
 		}
 	}
