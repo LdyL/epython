@@ -944,7 +944,8 @@ static struct value_defn reduceData(struct value_defn to_send, int rop, int tota
 		if (sharedData->core_ctrl[i].active) {
 			totalActioned++;
 			if (i == myId) continue;
-			retrieved=sendRecvData(to_send, i);
+      //passing global core id required by sendRecvData() but actually, this sendrecv only performs locally
+			retrieved=sendRecvData(to_send, i+getLargestCoreId(i)*sharedData->nodeId);
 			if (to_send.type==INT_TYPE) {
 				cpy(&tempInt, retrieved.data, sizeof(int));
 				if (rop==0) intV+=tempInt;
