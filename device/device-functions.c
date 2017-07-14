@@ -39,6 +39,7 @@ static struct value_defn recvData(int);
 static struct value_defn sendRecvData(struct value_defn, int);
 static struct value_defn bcastData(struct value_defn, int, int);
 static struct value_defn reduceData(struct value_defn, int, int);
+static struct value_defn reduceData_remote(struct value_defn, int, volatile e_barrier_t[], e_barrier_t*[]);
 static struct value_defn getInputFromUser(void);
 static struct value_defn getInputFromUserWithString(struct value_defn, int, struct symbol_node*);
 static void displayToUser(struct value_defn, int, struct symbol_node*);
@@ -968,7 +969,7 @@ static struct value_defn reduceData(struct value_defn to_send, int rop, int tota
 	}
 
   if (sharedData->num_nodes > 1) {
-    returnValue = reduceData_remote(returnValue, rop);
+    returnValue = reduceData_remote(returnValue, rop, syncbarriers, sync_tgt_bars);
   }
 	return returnValue;
 }
