@@ -41,6 +41,7 @@
 
 //MPI tags
 #define BARRIER_SIG 101
+#define REDUCE_SIG 102
 
 struct core_ctrl {
 	unsigned int core_run, core_busy, core_command;
