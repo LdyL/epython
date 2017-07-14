@@ -690,7 +690,7 @@ static void __attribute__((optimize("O0"))) remote_Bcast(struct shared_basic * i
 		}
 	}	else if (info->core_ctrl[coreId].data[5]==BCAST_RECEIVER) {
 		int source;
-		memcpy(&source, info->core_ctrl[coreId].data, sizeof(int))
+		memcpy(&source, info->core_ctrl[coreId].data, sizeof(int));
 		if (info->core_ctrl[coreId].data[4]==INT_TYPE) {
 			MPI_Recv(&bcast_int, 1, MPI_INT, resolveRank(source), source, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 			memcpy(&info->core_ctrl[coreId].data[6], &bcast_int, sizeof(int));
