@@ -176,7 +176,6 @@ void monitorCores(struct shared_basic * basicState, struct interpreterconfigurat
  */
 static void checkStatusFlagsOfCore(struct shared_basic * basicState, struct interpreterconfiguration* configuration, int coreId, MPI_Request *reqs, int * interParallellaCommInProgress, char * postbox) {
 	char updateCoreWithComplete=0;
-	printf("[node %d][monitor]got command %d from core %d\n", basicState->nodeId, basicState->core_ctrl[coreId].core_command, coreId);
 	if (basicState->core_ctrl[coreId].core_busy == 0) {
 		if (basicState->core_ctrl[coreId].core_run == 0) {
 			deactivateCore(configuration, coreId);
@@ -726,7 +725,6 @@ static void __attribute__((optimize("O0"))) syncNodes(struct shared_basic * info
 		MPI_Send(&sendSignal, 1, MPI_INT, 0, BARRIER_SIG, MPI_COMM_WORLD);
 		MPI_Recv(&recvSignal, 1, MPI_INT, 0, BARRIER_SIG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 	}
-	//printf("[node %d]Sync finished!\n", info->nodeId);
 }
 
 /**
