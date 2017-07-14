@@ -1004,19 +1004,20 @@ static struct value_defn reduceData_remote(struct value_defn reduceValue, int rr
 
     cpy(returnValue_remote.data, &sharedData->core_ctrl[myId].data[5], 4);
     returnValue_remote.type=sharedData->core_ctrl[myId].data[9];
+    returnValue_remote.dtype=SCALAR;
 
 		// release local ecores and Broadcasts reduced value to them
 		for (i=1; i<TOTAL_CORES; i++) {
 			if (sharedData->core_ctrl[i].active) *(target_barrier_array[i]) = 1;
       sendDataToDeviceCore(returnValue_remote, i, 1);
 		}
+    return returnValue_remote;
 	} else {
 		*(target_barrier_array[0]) = 1;
 		while (barrier_array[0] == 0) {};
 		barrier_array[0] = 0;
-    returnValue_remote=recvDataFromDeviceCore(lowestCoreId);
+    return recvDataFromDeviceCore(lowestCoreId);
 	}
-  return returnValue_remote;
 }
 
 /**
