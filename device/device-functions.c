@@ -975,7 +975,7 @@ static struct value_defn bcastReceiver(struct value_defn to_recv, int source, vo
     sharedData->core_ctrl[myId].core_busy=0;
     while (sharedData->core_ctrl[myId].core_busy==0 || sharedData->core_ctrl[myId].core_busy<=pb) { }
     //receive value from host
-    cpy(recvValue.data, sharedData->core_ctrl[myId].data[6], 4);
+    cpy(recvValue.data, &sharedData->core_ctrl[myId].data[6], 4);
     recvValue.type=sharedData->core_ctrl[myId].data[10];
     recvValue.dtype=SCALAR;
     //release local ecores and broadcast received value to them
