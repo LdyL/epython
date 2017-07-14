@@ -176,7 +176,6 @@ void monitorCores(struct shared_basic * basicState, struct interpreterconfigurat
  */
 static void checkStatusFlagsOfCore(struct shared_basic * basicState, struct interpreterconfiguration* configuration, int coreId, MPI_Request *reqs, int * interParallellaCommInProgress, char * postbox) {
 	char updateCoreWithComplete=0;
-	int i;
 	if (basicState->core_ctrl[coreId].core_busy == 0) {
 		if (basicState->core_ctrl[coreId].core_run == 0) {
 			deactivateCore(configuration, coreId);
@@ -220,8 +219,6 @@ static void checkStatusFlagsOfCore(struct shared_basic * basicState, struct inte
 		} else if (basicState->core_ctrl[coreId].core_command == 7) {
 			if (!interParallellaCommInProgress[coreId]) {
 				remoteP2P_SendRecv_Start(coreId, basicState, reqs, postbox);
-				int targetC;
-				memcpy(&targetC, &(basicState->core_ctrl[coreId].data[0]), sizeof(int));
 				interParallellaCommInProgress[coreId] = 1;
 			} else {
 				int flagsend, flagrecv;
@@ -229,8 +226,6 @@ static void checkStatusFlagsOfCore(struct shared_basic * basicState, struct inte
 				MPI_Test(&reqs[coreId*2+1], &flagrecv, MPI_STATUS_IGNORE);
 				if (flagsend && flagrecv) {
 					remoteP2P_SendRecv_Finish(coreId, basicState, postbox);
-					int targetCore;
-					memcpy(&targetCore, &(basicState->core_ctrl[coreId].data[0]), sizeof(int));
 					interParallellaCommInProgress[coreId] = 0;
 					updateCoreWithComplete=1;
 				}

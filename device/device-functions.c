@@ -170,7 +170,7 @@ void callNativeFunction(struct value_defn * value, unsigned char fnIdentifier, i
         }
     } else if (fnIdentifier==NATIVE_FN_RTL_REDUCE) {
         if (numArgs != 2) raiseError(ERR_INCORRECT_NUM_NATIVE_PARAMS);
-        *value=reduceData(parameters[0], getInt(parameters[1].data), numActiveCores*sharedData->num_nodes);
+        *value=reduceData(parameters[0], getInt(parameters[1].data), numActiveCores);
     } else if (fnIdentifier==NATIVE_FN_RTL_ALLOCARRAY || fnIdentifier==NATIVE_FN_RTL_ALLOCSHAREDARRAY) {
         int totalDataSize=1, i;
         for (i=0;i<numArgs;i++) {
@@ -939,12 +939,10 @@ static struct value_defn reduceData(struct value_defn to_send, int rop, int tota
 	}
 	syncCores(1);
 	for (i=0;i<TOTAL_CORES*sharedData->num_nodes && totalActioned<totalProcesses;i++) {
-    //if (16==myId+sharedData->nodeId*TOTAL_CORES) raiseError(ERR_CHECK_POINT_A);
-		if (sharedData->core_ctrl[i].active || i>=TOTAL_CORES) {
-      //if (16==myId+sharedData->nodeId*TOTAL_CORES) raiseError(ERR_CHECK_POINT_B);
+		if (sharedData->core_ctrl[i].active) {
 			totalActioned++;
 			if (i == myId) continue;
-      //passing global core id required by sendRecvData() but actually, this sendrecv only performs locally
+      //passing global core id required by sendRecvData() but actually, this sendrecv is only performed locally
 			retrieved=sendRecvData(to_send, i+getLargestCoreId(i)*sharedData->nodeId);
 			if (to_send.type==INT_TYPE) {
 				cpy(&tempInt, retrieved.data, sizeof(int));
