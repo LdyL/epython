@@ -773,7 +773,6 @@ static void __attribute__((optimize("O0"))) performReduceOp(struct shared_basic 
 static void __attribute__((optimize("O0"))) remoteP2P_Send(int sourceId, struct shared_basic * info, MPI_Request *r_handles, char *sendbuf) {
 	int dest, sourceId_global;
 	int receipt;
-	MPI_Request request;
 	sourceId_global = TOTAL_CORES*info->nodeId + sourceId;
 
 	//retrieve data from Epiphany
@@ -781,8 +780,7 @@ static void __attribute__((optimize("O0"))) remoteP2P_Send(int sourceId, struct 
 	sendbuf[sourceId*30+0]=info->core_ctrl[sourceId].data[5];
 	memcpy(&sendbuf[sourceId*30+1], &(info->core_ctrl[sourceId].data[6]), 4);
 
-	MPI_Isend(&sendbuf[sourceId*30], 5, MPI_BYTE, resolveRank(dest), sourceId_global, MPI_COMM_WORLD, &request);
-	MPI_Irecv(&receipt, 1, MPI_INT, resolveRank(dest), dest, MPI_COMM_WORLD, &r_handles[sourceId*2]);
+	MPI_Issend(&sendbuf[sourceId*30], 5, MPI_BYTE, resolveRank(dest), sourceId_global, MPI_COMM_WORLD, &r_handles[sourceId*2]);
 }
 
 /**
@@ -805,8 +803,6 @@ static void __attribute__((optimize("O0"))) remoteP2P_Recv_Finish(int destId, st
 
 	info->core_ctrl[destId].data[5] = recvbuf[destId*30+15];
 	memcpy(&info->core_ctrl[destId].data[6], &recvbuf[destId*30+15+1], 4);
-
-	MPI_Isend(&receipt, 1, MPI_INT, resolveRank(source), destId_global, MPI_COMM_WORLD, &request);
 }
 
 /**
