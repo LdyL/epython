@@ -833,8 +833,8 @@ static void __attribute__((optimize("O0"))) remoteP2P_SendRecv_Start(int callerI
 	memcpy(&sendrecvbuf[callerId*30], &target, sizeof(int));
 	memcpy(&sendrecvbuf[callerId*30+8], &callerId_global, sizeof(int));
 
-	MPI_Isend(&sendrecvbuf[callerId*30], 15, MPI_BYTE, resolveRank(target), callerId_global, MPI_COMM_WORLD, &r_handles[callerId*2]);
-	MPI_Irecv(&sendrecvbuf[callerId*30+15], 15, MPI_BYTE, resolveRank(target), target, MPI_COMM_WORLD, &r_handles[callerId*2+1]);
+	MPI_Isend(&sendrecvbuf[callerId*30], 15, MPI_CHAR, resolveRank(target), callerId_global, MPI_COMM_WORLD, &r_handles[callerId*2]);
+	MPI_Irecv(&sendrecvbuf[callerId*30+15], 15, MPI_CHAR, resolveRank(target), target, MPI_COMM_WORLD, &r_handles[callerId*2+1]);
 }
 
 static void __attribute__((optimize("O0"))) remoteP2P_SendRecv_Finish(int callerId, struct shared_basic * info, char *sendrecvbuf) {
