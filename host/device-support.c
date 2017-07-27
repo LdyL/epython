@@ -794,13 +794,6 @@ static void __attribute__((optimize("O0"))) remoteP2P_Recv_Start(int destId, str
 }
 
 static void __attribute__((optimize("O0"))) remoteP2P_Recv_Finish(int destId, struct shared_basic * info, char *recvbuf) {
-	int source;
-	int receipt;
-	int destId_global = TOTAL_CORES*info->nodeId + destId;
-	MPI_Request request;
-
-  memcpy(&source, &(info->core_ctrl[destId].data[0]), sizeof(int));
-
 	info->core_ctrl[destId].data[5] = recvbuf[destId*30+15];
 	memcpy(&info->core_ctrl[destId].data[6], &recvbuf[destId*30+15+1], 4);
 }
@@ -812,21 +805,13 @@ static void __attribute__((optimize("O0"))) remoteP2P_SendRecv_Start(int callerI
 	int target;
 	int callerId_global = TOTAL_CORES*info->nodeId + callerId;
 
+	//write data type to send buffer
 	sendrecvbuf[callerId*30+14] = info->core_ctrl[callerId].data[5];
-	memcpy(&target, info->core_ctrl[callerId].data, sizeof(int));
-	if (sendrecvbuf[callerId*30+14]==REAL_TYPE) {
-		float val_float;
-		memcpy(&val_float, &(info->core_ctrl[callerId].data[6]), sizeof(float));
-		memcpy(&sendrecvbuf[callerId*30+4], &val_float, sizeof(float));
-	} else if (sendrecvbuf[callerId*30+14]==INT_TYPE) {
-		int val_int;
-		memcpy(&val_int, &(info->core_ctrl[callerId].data[6]), sizeof(int));
-		memcpy(&sendrecvbuf[callerId*30+4], &val_int, sizeof(int));
-	} else {
-		printf("[node %d]unsupported sending data type\n",info->nodeId);
-	}
-
-	memcpy(&sendrecvbuf[callerId*30], &target, sizeof(int));
+	//write target's global ID to send buffer
+	memcpy(&sendrecvbuf[callerId*30], info->core_ctrl[callerId].data, sizeof(int));
+	//write data to send buffer
+	memcpy(&sendrecvbuf[callerId*30+4], &(info->core_ctrl[callerId].data[6]), 4);
+	//writer sender's global ID to send buffer
 	memcpy(&sendrecvbuf[callerId*30+8], &callerId_global, sizeof(int));
 
 	MPI_Isend(&sendrecvbuf[callerId*30], 15, MPI_BYTE, resolveRank(target), callerId_global, MPI_COMM_WORLD, &r_handles[callerId*2]);
@@ -835,17 +820,7 @@ static void __attribute__((optimize("O0"))) remoteP2P_SendRecv_Start(int callerI
 
 static void __attribute__((optimize("O0"))) remoteP2P_SendRecv_Finish(int callerId, struct shared_basic * info, char *sendrecvbuf) {
 	info->core_ctrl[callerId].data[10]=sendrecvbuf[callerId*30+15+14];
-	if (info->core_ctrl[callerId].data[10]==REAL_TYPE) {
-		float val_float;
-		memcpy(&val_float, &sendrecvbuf[callerId*30+15+4], sizeof(float));
-		memcpy(&(info->core_ctrl[callerId].data[11]), &sendrecvbuf[callerId*30+15+4], sizeof(float));
-	} else if (info->core_ctrl[callerId].data[10]==INT_TYPE) {
-		int val_int;
-		memcpy(&val_int, &sendrecvbuf[callerId*30+15+4], sizeof(int));
-		memcpy(&(info->core_ctrl[callerId].data[11]), &sendrecvbuf[callerId*30+15+4], sizeof(int));
-	} else {
-		printf("[node %d]unknown data type for received data\n",info->nodeId);
-	}
+	memcpy(&(info->core_ctrl[callerId].data[11]), &sendrecvbuf[callerId*30+15+4], 4);
 }
 
 /**
