@@ -805,14 +805,16 @@ static void __attribute__((optimize("O0"))) remoteP2P_SendRecv_Start(int callerI
 	int target;
 	int callerId_global = TOTAL_CORES*info->nodeId + callerId;
 
-	//write data type to send buffer
-	sendrecvbuf[callerId*30+14] = info->core_ctrl[callerId].data[5];
+	//retrieve target global ID
+	memcpy(&target, info->core_ctrl[callerId].data, sizeof(int));
 	//write target's global ID to send buffer
-	memcpy(&sendrecvbuf[callerId*30], info->core_ctrl[callerId].data, sizeof(int));
+	memcpy(&sendrecvbuf[callerId*30], &target, sizeof(int));
 	//write data to send buffer
 	memcpy(&sendrecvbuf[callerId*30+4], &(info->core_ctrl[callerId].data[6]), 4);
 	//writer sender's global ID to send buffer
 	memcpy(&sendrecvbuf[callerId*30+8], &callerId_global, sizeof(int));
+	//write data type to send buffer
+	sendrecvbuf[callerId*30+14] = info->core_ctrl[callerId].data[5];
 
 	MPI_Isend(&sendrecvbuf[callerId*30], 15, MPI_BYTE, resolveRank(target), callerId_global, MPI_COMM_WORLD, &r_handles[callerId*2]);
 	MPI_Irecv(&sendrecvbuf[callerId*30+15], 15, MPI_BYTE, resolveRank(target), target, MPI_COMM_WORLD, &r_handles[callerId*2+1]);
