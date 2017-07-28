@@ -45,7 +45,7 @@ static struct value_defn reduceData_remote(struct value_defn, int, volatile e_ba
 static struct value_defn getInputFromUser(void);
 static struct value_defn getInputFromUserWithString(struct value_defn, int, struct symbol_node*);
 static void displayToUser(struct value_defn, int, struct symbol_node*);
-static void garbageCollect(int, struct symbol_node*);
+//static void garbageCollect(int, struct symbol_node*);
 static void sendDataToDeviceCore(struct value_defn, int, char);
 static void sendDataToHostProcess(struct value_defn, int);
 static struct value_defn recvDataFromHostProcess(int);
@@ -59,8 +59,8 @@ static struct value_defn doGetInputFromUser();
 static int stringCmp(char*, char*);
 static void consolidateHeapChunks(char);
 static char * allocateChunkInHeapMemory(int, char);
-static char isMemoryAddressFound(char*, int, struct symbol_node*);
-static void performGC(int, struct symbol_node*, char);
+//static char isMemoryAddressFound(char*, int, struct symbol_node*);
+//static void performGC(int, struct symbol_node*, char);
 static struct value_defn performMathsOp(int, struct value_defn);
 static int getLargestCoreId(int);
 static int isLocal(int);
@@ -118,9 +118,9 @@ void callNativeFunction(struct value_defn * value, unsigned char fnIdentifier, i
     } else if (fnIdentifier==NATIVE_FN_RTL_SYNC) {
         if (numArgs != 0) raiseError(ERR_INCORRECT_NUM_NATIVE_PARAMS);
         syncCores(1);
-    } else if (fnIdentifier==NATIVE_FN_RTL_GC) {
-        if (numArgs != 0) raiseError(ERR_INCORRECT_NUM_NATIVE_PARAMS);
-        garbageCollect(currentSymbolEntries, symbolTable);
+//    } else if (fnIdentifier==NATIVE_FN_RTL_GC) {
+//        if (numArgs != 0) raiseError(ERR_INCORRECT_NUM_NATIVE_PARAMS);
+//        garbageCollect(currentSymbolEntries, symbolTable);
     } else if (fnIdentifier==NATIVE_FN_RTL_FREE) {
         if (numArgs != 1) raiseError(ERR_INCORRECT_NUM_NATIVE_PARAMS);
         char * ptr;
@@ -397,7 +397,7 @@ char* getHeapMemory(int size, char isShared, int currentSymbolEntries, struct sy
 		char * dS=allocateChunkInHeapMemory(size, 1);
 		if (dS == NULL) {
             if (currentSymbolEntries >= 0 && symbolTable != NULL) {
-                performGC(currentSymbolEntries, symbolTable, 1);
+                //performGC(currentSymbolEntries, symbolTable, 1);
                 dS=allocateChunkInHeapMemory(size, 1);
             }
             if (dS == NULL) raiseError(ERR_OUT_OF_SHARED_HEAP_MEM);
@@ -407,14 +407,14 @@ char* getHeapMemory(int size, char isShared, int currentSymbolEntries, struct sy
 		char * dS=allocateChunkInHeapMemory(size, 0);
 		if (dS == NULL) {
             if (currentSymbolEntries >= 0 && symbolTable != NULL) {
-                performGC(currentSymbolEntries, symbolTable, 0);
+                //performGC(currentSymbolEntries, symbolTable, 0);
                 dS=allocateChunkInHeapMemory(size, 0);
             }
             if (dS == NULL) {
                 dS=allocateChunkInHeapMemory(size, 1);
                 if (dS == NULL) {
                     if (currentSymbolEntries >= 0 && symbolTable != NULL) {
-                        performGC(currentSymbolEntries, symbolTable, 1);
+                        //performGC(currentSymbolEntries, symbolTable, 1);
                         dS=allocateChunkInHeapMemory(size, 1);
                     }
                     if (dS == NULL) raiseError(ERR_OUT_OF_CORE_SHARED_HEAP_MEM);
@@ -431,7 +431,7 @@ void freeMemoryInHeap(void * addr) {
     cpy(address-1, &chunkInUse, sizeof(unsigned char));
     consolidateHeapChunks((int) address > LOCAL_CORE_MEMORY_MAP_TOP);
 }
-
+/*
 static void garbageCollect(int currentSymbolEntries, struct symbol_node* symbolTable) {
     performGC(currentSymbolEntries, symbolTable, 0);
     performGC(currentSymbolEntries, symbolTable, 1);
@@ -487,7 +487,7 @@ static char isMemoryAddressFound(char * address, int currentSymbolEntries, struc
     }
     return 0;
 }
-
+*/
 static void consolidateHeapChunks(char inSharedMemory) {
     unsigned char chunkInUse;
     unsigned short coreChunkLength, nextCoreChunkLength;
