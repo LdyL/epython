@@ -57,7 +57,7 @@ volatile unsigned int * pb;
 static void initialiseCores(struct shared_basic*, int, struct interpreterconfiguration*);
 static void loadBinaryInterpreterOntoCores(struct interpreterconfiguration*, char);
 static void placeByteCode(struct shared_basic*, int, char*);
-static void checkStatusFlagsOfCore(struct shared_basic*, struct interpreterconfiguration*, int, MPI_Request *, int *, char *);
+static void checkStatusFlagsOfCore(struct shared_basic*, struct interpreterconfiguration*, int, MPI_Request *, int *);
 static void deactivateCore(struct interpreterconfiguration*, int);
 static void startApplicableCores(struct shared_basic*, struct interpreterconfiguration*);
 static void timeval_subtract(struct timeval*, struct timeval*,  struct timeval*);
@@ -163,7 +163,7 @@ void monitorCores(struct shared_basic * basicState, struct interpreterconfigurat
 	while (totalActive > 0) {
 		for (i=0;i<TOTAL_CORES;i++) {
 			if (active[i]) {
-				checkStatusFlagsOfCore(basicState, configuration, i, requests, commStatus, Parallella_postbox);
+				checkStatusFlagsOfCore(basicState, configuration, i, requests, commStatus);
 			}
 		}
 	}
