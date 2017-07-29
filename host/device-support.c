@@ -67,11 +67,9 @@ static void stringConcatenate(int, struct core_ctrl*);
 static void inputCoreMessage(int, struct core_ctrl*);
 static void syncNodes(struct shared_basic*);
 static void remote_Bcast(struct shared_basic*, int);
-static void remoteP2P_Send(int, struct shared_basic*, MPI_Request *, char *);
-static void remoteP2P_Recv_Start(int, struct shared_basic*, MPI_Request *, char *);
-static void remoteP2P_Recv_Finish(int, struct shared_basic*, char *);
-static void remoteP2P_SendRecv_Start(int, struct shared_basic*, MPI_Request *, char *);
-static void remoteP2P_SendRecv_Finish(int, struct shared_basic*, char *);
+static void remoteP2P_Send(int, struct shared_basic*, MPI_Request *);
+static void remoteP2P_Recv(int, struct shared_basic*, MPI_Request *);
+static void remoteP2P_SendRecv(int, struct shared_basic*, MPI_Request *);
 static void performReduceOp(struct shared_basic*, int);
 static void performMathsOp(struct core_ctrl*);
 static int getTypeOfInput(char*);
@@ -160,7 +158,6 @@ void finaliseCores(void) {
 void monitorCores(struct shared_basic * basicState, struct interpreterconfiguration* configuration) {
 	int i;
 	int commStatus[TOTAL_CORES]={0};
-	char Parallella_postbox[TOTAL_CORES*15*2];
 	MPI_Request requests[TOTAL_CORES*2];
 
 	while (totalActive > 0) {
@@ -194,7 +191,7 @@ static void checkStatusFlagsOfCore(struct shared_basic * basicState, struct inte
 			updateCoreWithComplete=1;
 		} else if (basicState->core_ctrl[coreId].core_command == 5) {
 			if (!interParallellaCommInProgress[coreId]) {
-				remoteP2P_Send(coreId, basicState, reqs, postbox);
+				remoteP2P_Send(coreId, basicState, reqs);
 				interParallellaCommInProgress[coreId] = 1;
 			} else {
 				int flag_send_received;
@@ -206,27 +203,25 @@ static void checkStatusFlagsOfCore(struct shared_basic * basicState, struct inte
 			}
 		} else if (basicState->core_ctrl[coreId].core_command == 6) {
 			if (!interParallellaCommInProgress[coreId]) {
-				remoteP2P_Recv_Start(coreId, basicState, reqs, postbox);
+				remoteP2P_Recv(coreId, basicState, reqs);
 				interParallellaCommInProgress[coreId] = 1;
 			} else {
 				int flag_data_received;
 				MPI_Test(&reqs[coreId*2+1], &flag_data_received, MPI_STATUS_IGNORE);
 				if (flag_data_received) {
-					remoteP2P_Recv_Finish(coreId, basicState, postbox);
 					interParallellaCommInProgress[coreId] = 0;
 					updateCoreWithComplete=1;
 				}
 			}
 		} else if (basicState->core_ctrl[coreId].core_command == 7) {
 			if (!interParallellaCommInProgress[coreId]) {
-				remoteP2P_SendRecv_Start(coreId, basicState, reqs, postbox);
+				remoteP2P_SendRecv(coreId, basicState, reqs);
 				interParallellaCommInProgress[coreId] = 1;
 			} else {
 				int flagsend, flagrecv;
 				MPI_Test(&reqs[coreId*2], &flagsend, MPI_STATUS_IGNORE);
 				MPI_Test(&reqs[coreId*2+1], &flagrecv, MPI_STATUS_IGNORE);
 				if (flagsend && flagrecv) {
-					remoteP2P_SendRecv_Finish(coreId, basicState, postbox);
 					interParallellaCommInProgress[coreId] = 0;
 					updateCoreWithComplete=1;
 				}
@@ -770,59 +765,39 @@ static void __attribute__((optimize("O0"))) performReduceOp(struct shared_basic 
 /**
  * Provisional remote point-to-point communication function: SEND
  */
-static void __attribute__((optimize("O0"))) remoteP2P_Send(int sourceId, struct shared_basic * info, MPI_Request *r_handles, char *sendbuf) {
+static void __attribute__((optimize("O0"))) remoteP2P_Send(int sourceId, struct shared_basic * info, MPI_Request *r_handles) {
 	int dest, sourceId_global;
 	int receipt;
 	sourceId_global = TOTAL_CORES*info->nodeId + sourceId;
 
-	//retrieve data from Epiphany
+	//retrieve receiver ID from Epiphany
 	memcpy(&dest, &(info->core_ctrl[sourceId].data[0]), sizeof(int));
-	sendbuf[sourceId*30+0]=info->core_ctrl[sourceId].data[5];
-	memcpy(&sendbuf[sourceId*30+1], &(info->core_ctrl[sourceId].data[6]), 4);
 
-	MPI_Issend(&sendbuf[sourceId*30], 5, MPI_BYTE, resolveRank(dest), sourceId_global, MPI_COMM_WORLD, &r_handles[sourceId*2]);
+	MPI_Issend(&info->core_ctrl[sourceId].data[5], 5, MPI_BYTE, resolveRank(dest), sourceId_global, MPI_COMM_WORLD, &r_handles[sourceId*2]);
 }
 
 /**
  * Provisional remote point-to-point communication function: RECV
  */
-static void __attribute__((optimize("O0"))) remoteP2P_Recv_Start(int destId, struct shared_basic * info, MPI_Request *r_handles, char *recvbuf) {
+static void __attribute__((optimize("O0"))) remoteP2P_Recv(int destId, struct shared_basic * info, MPI_Request *r_handles) {
 	int source;
 
 	memcpy(&source, &(info->core_ctrl[destId].data[0]), sizeof(int));
-	MPI_Irecv(&recvbuf[destId*30+15], 5, MPI_BYTE, resolveRank(source), source, MPI_COMM_WORLD, &r_handles[destId*2+1]);
-}
-
-static void __attribute__((optimize("O0"))) remoteP2P_Recv_Finish(int destId, struct shared_basic * info, char *recvbuf) {
-	info->core_ctrl[destId].data[5] = recvbuf[destId*30+15];
-	memcpy(&info->core_ctrl[destId].data[6], &recvbuf[destId*30+15+1], 4);
+	MPI_Irecv(&info->core_ctrl[destId].data[5], 5, MPI_BYTE, resolveRank(source), source, MPI_COMM_WORLD, &r_handles[destId*2+1]);
 }
 
 /**
  * Provisional remote point-to-point communication function: SEND AND RECV
  */
-static void __attribute__((optimize("O0"))) remoteP2P_SendRecv_Start(int callerId, struct shared_basic * info, MPI_Request *r_handles, char *sendrecvbuf) {
+static void __attribute__((optimize("O0"))) remoteP2P_SendRecv(int callerId, struct shared_basic * info, MPI_Request *r_handles) {
 	int target;
 	int callerId_global = TOTAL_CORES*info->nodeId + callerId;
 
 	//retrieve target global ID
 	memcpy(&target, info->core_ctrl[callerId].data, sizeof(int));
-	//write target's global ID to send buffer
-	memcpy(&sendrecvbuf[callerId*30], &target, sizeof(int));
-	//write data to send buffer
-	memcpy(&sendrecvbuf[callerId*30+4], &(info->core_ctrl[callerId].data[6]), 4);
-	//writer sender's global ID to send buffer
-	memcpy(&sendrecvbuf[callerId*30+8], &callerId_global, sizeof(int));
-	//write data type to send buffer
-	sendrecvbuf[callerId*30+14] = info->core_ctrl[callerId].data[5];
 
-	MPI_Isend(&sendrecvbuf[callerId*30], 15, MPI_BYTE, resolveRank(target), callerId_global, MPI_COMM_WORLD, &r_handles[callerId*2]);
-	MPI_Irecv(&sendrecvbuf[callerId*30+15], 15, MPI_BYTE, resolveRank(target), target, MPI_COMM_WORLD, &r_handles[callerId*2+1]);
-}
-
-static void __attribute__((optimize("O0"))) remoteP2P_SendRecv_Finish(int callerId, struct shared_basic * info, char *sendrecvbuf) {
-	info->core_ctrl[callerId].data[10]=sendrecvbuf[callerId*30+15+14];
-	memcpy(&(info->core_ctrl[callerId].data[11]), &sendrecvbuf[callerId*30+15+4], 4);
+	MPI_Issend(&info->core_ctrl[callerId].data[5], 5, MPI_BYTE, resolveRank(target), callerId_global, MPI_COMM_WORLD, &r_handles[callerId*2]);
+	MPI_Irecv(&info->core_ctrl[callerId].data[10], 5, MPI_BYTE, resolveRank(target), target, MPI_COMM_WORLD, &r_handles[callerId*2+1]);
 }
 
 /**
