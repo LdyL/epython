@@ -172,7 +172,7 @@ void monitorCores(struct shared_basic * basicState, struct interpreterconfigurat
 /**
  * Checks whether the core has sent some command to the host and actions this command if so
  */
-static void checkStatusFlagsOfCore(struct shared_basic * basicState, struct interpreterconfiguration* configuration, int coreId, MPI_Request *reqs, int * interParallellaCommInProgress, char * postbox) {
+static void checkStatusFlagsOfCore(struct shared_basic * basicState, struct interpreterconfiguration* configuration, int coreId, MPI_Request *reqs, int * interParallellaCommInProgress) {
 	char updateCoreWithComplete=0;
 	if (basicState->core_ctrl[coreId].core_busy == 0) {
 		if (basicState->core_ctrl[coreId].core_run == 0) {
