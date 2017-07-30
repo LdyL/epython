@@ -1076,8 +1076,10 @@ static struct value_defn reduceData_remote(struct value_defn reduceValue, int rr
 
 		//release local ecores and broadcast reduced value to them
 		for (i=1; i<TOTAL_CORES; i++) {
-			if (sharedData->core_ctrl[i].active) *(target_barrier_array[i]) = 1;
-      sendDataToDeviceCore(returnValue_remote, i, 1);
+			if (sharedData->core_ctrl[i].active) {
+        *(target_barrier_array[i]) = 1;
+        sendDataToDeviceCore(returnValue_remote, i, 1);
+      }
 		}
     return returnValue_remote;
 	} else {
