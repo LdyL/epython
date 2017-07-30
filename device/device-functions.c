@@ -787,7 +787,7 @@ static struct value_defn recvDataFromDeviceCore(int source) {
 static struct value_defn sendRecvData(struct value_defn to_send, int target) {
 	if (to_send.type == STRING_TYPE) raiseError(ERR_ONLY_SEND_INT_AND_REAL);
 	if (isLocal(target)) {
-		return sendRecvDataWithDeviceCore(to_send, target-getLargestCoreId(target)*sharedData->nodeId);
+		return sendRecvDataWithDeviceCore(to_send, target-TOTAL_CORES*sharedData->nodeId);
 	} else {
 		return sendRecvDataWithHostProcess(to_send, target);
 	}
@@ -1013,7 +1013,7 @@ static struct value_defn reduceData(struct value_defn to_send, int rop, int tota
 			totalActioned++;
 			if (i == myId) continue;
       //passing global core id required by sendRecvData() but actually, this sendrecv is only performed locally
-			retrieved=sendRecvData(to_send, i+getLargestCoreId(i)*sharedData->nodeId);
+			retrieved=sendRecvData(to_send, i+TOTAL_CORES*sharedData->nodeId);
 			if (to_send.type==INT_TYPE) {
 				cpy(&tempInt, retrieved.data, sizeof(int));
 				if (rop==0) intV+=tempInt;
