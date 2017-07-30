@@ -766,7 +766,6 @@ static void __attribute__((optimize("O0"))) performReduceOp(struct shared_basic 
  */
 static void __attribute__((optimize("O0"))) remoteP2P_Send(int sourceId, struct shared_basic * info, MPI_Request *r_handles) {
 	int dest, sourceId_global;
-	int receipt;
 	sourceId_global = TOTAL_CORES*info->nodeId + sourceId;
 
 	//retrieve receiver ID from Epiphany

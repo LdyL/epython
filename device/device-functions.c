@@ -737,7 +737,7 @@ static struct value_defn probeForMessage(int source) {
 
 static struct value_defn recvData(int source) {
 	if (isLocal(source)) {
-		return recvDataFromDeviceCore(source-getLargestCoreId(source)*sharedData->nodeId);
+		return recvDataFromDeviceCore(source-TOTAL_CORES*sharedData->nodeId);
 	} else {
 		return recvDataFromHostProcess(source);
 	}
@@ -810,7 +810,7 @@ static struct value_defn sendRecvDataWithHostProcess(struct value_defn to_send, 
 
 static struct value_defn sendRecvDataWithDeviceCore(struct value_defn to_send, int target) {
 	struct value_defn receivedData;
-  int targetId_global = target+getLargestCoreId(target)*sharedData->nodeId;
+  int targetId_global = target+TOTAL_CORES*sharedData->nodeId;
 	if (!sharedData->core_ctrl[target].active) {
 		raiseError(ERR_SEND_TO_INACTIVE_CORE);
 	} else {
