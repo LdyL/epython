@@ -87,7 +87,6 @@ static void printbinchar(char);
 struct shared_basic * loadCodeOntoEpiphany(struct interpreterconfiguration* configuration) {
 	struct shared_basic * basicCode;
 	int i, result, codeOnCore=0;
-	int cluster_num_node, my_node_id;
 	e_set_host_verbosity(H_D0);
 	result = e_init(NULL);
 	if (result == E_ERR) fprintf(stderr, "Error on initialisation\n");
