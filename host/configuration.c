@@ -55,7 +55,7 @@ struct interpreterconfiguration* readConfiguration(int argc, char *argv[]) {
 	configuration->nNodes=cluster_num_node;
 	configuration->myNode=my_node_id;
 	configuration->globalActive=cluster_num_node*TOTAL_CORES;
-	configuration->globalActive=TOTAL_CORES;
+	configuration->localActive=TOTAL_CORES;
 	configuration->intentActive=(char*) malloc(TOTAL_CORES);
 	for (i=0;i<TOTAL_CORES;i++) configuration->intentActive[i]=1;
 	configuration->displayStats=configuration->displayTiming=configuration->forceCodeOnCore=
