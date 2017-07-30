@@ -1008,7 +1008,7 @@ static struct value_defn reduceData(struct value_defn to_send, int rop, int tota
 		cpy(&floatV, to_send.data, sizeof(int));
 	}
 	syncCores(1);
-	for (i=0;i<TOTAL_CORES*sharedData->num_nodes && totalActioned<totalProcesses;i++) {
+	for (i=0;i<TOTAL_CORES && totalActioned<totalProcesses;i++) {
 		if (sharedData->core_ctrl[i].active) {
 			totalActioned++;
 			if (i == myId) continue;
