@@ -49,6 +49,13 @@ static void displayHelp(void);
 struct interpreterconfiguration* readConfiguration(int argc, char *argv[]) {
 	int i;
 	struct interpreterconfiguration* configuration=(struct interpreterconfiguration*) malloc(sizeof(struct interpreterconfiguration));
+	int cluster_num_node, my_node_id;
+	MPI_Comm_size(MPI_COMM_WORLD, &cluster_num_node);
+	MPI_Comm_rank(MPI_COMM_WORLD, &my_node_id);
+	configuration->nNodes=cluster_num_node;
+	configuration->myNode=my_node_id;
+	configuration->globalActive=cluster_num_node*TOTAL_CORES;
+	configuration->globalActive=TOTAL_CORES;
 	configuration->intentActive=(char*) malloc(TOTAL_CORES);
 	for (i=0;i<TOTAL_CORES;i++) configuration->intentActive[i]=1;
 	configuration->displayStats=configuration->displayTiming=configuration->forceCodeOnCore=
@@ -131,14 +138,15 @@ static void parseCommandLineArguments(struct interpreterconfiguration* configura
 					fprintf(stderr, "You must provide a number of device processes to use\n");
 					exit(0);
 				} else {
-					int cluster_num_node, my_node_id;
-					MPI_Comm_size(MPI_COMM_WORLD, &cluster_num_node);
-					MPI_Comm_rank(MPI_COMM_WORLD, &my_node_id);
+					int cluster_num_node=configuration->nNodes;
+					int my_node_id=configuration->myNode;
 					int j, device_procs, total_procs=atoi(argv[++i]);
+					configuration->nNodes=total_procs/16;
 					if (cluster_num_node*16 < total_procs) {
 						if (my_node_id==0) fprintf(stderr, "Insufficient number of cores in the cluster\n");
 						exit(0);
 					}
+					configuration->globalActive=total_procs;
 					if ((my_node_id+1)*16 <= total_procs) {
 						device_procs = 16;
 					} else if (my_node_id*16 < total_procs) {
@@ -146,6 +154,7 @@ static void parseCommandLineArguments(struct interpreterconfiguration* configura
 					} else {
 						device_procs = 0;
 					}
+					configuration->localActive=device_procs;
 					for (j=0;j<16;j++) {
 						configuration->intentActive[j]=j<device_procs ? 1 : 0;
 					}

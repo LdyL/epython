@@ -34,7 +34,7 @@ struct interpreterconfiguration {
 	char * intentActive;
 	char displayStats, displayTiming, forceCodeOnCore, forceCodeOnShared, forceDataOnShared, displayPPCode;
 	char * filename, *compiledByteFilename, *loadByteFilename, *pipedInContents;
-	int hostProcs, coreProcs, loadElf, loadSrec, fullPythonHost;
+	int hostProcs, coreProcs, loadElf, loadSrec, fullPythonHost, globalActive, localActive, nNodes, myNode;
 };
 
 struct interpreterconfiguration* readConfiguration(int, char *[]);

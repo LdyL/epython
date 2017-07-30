@@ -150,12 +150,12 @@ void callNativeFunction(struct value_defn * value, unsigned char fnIdentifier, i
 		    value->dtype=SCALAR;
         if (fnIdentifier==NATIVE_FN_RTL_NUMCORES) {
           int numCoresGlobal;
-          numCoresGlobal = numActiveCores*sharedData->num_nodes;
+          numCoresGlobal = sharedData->globalActive;
           cpy(value->data, &numCoresGlobal, sizeof(int));
         }
         if (fnIdentifier==NATIVE_FN_RTL_COREID) {
           int globalCoreId;
-          globalCoreId = localCoreId+numActiveCores*sharedData->nodeId;
+          globalCoreId = localCoreId+TOTAL_CORES*sharedData->nodeId;
           cpy(value->data, &globalCoreId, sizeof(int));
         }
     } else if (fnIdentifier==NATIVE_FN_RTL_NUMNODES || fnIdentifier==NATIVE_FN_RTL_NODEID) {

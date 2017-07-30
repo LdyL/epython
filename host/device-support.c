@@ -118,11 +118,11 @@ struct shared_basic * loadCodeOntoEpiphany(struct interpreterconfiguration* conf
 	basicCode->num_procs=configuration->coreProcs+configuration->hostProcs;
 	basicCode->baseHostPid=configuration->coreProcs;
 
-	//Assign Nunber of Nodes and Node ID to the current copy of ePyhton based on MPI size and rank
-	MPI_Comm_size(MPI_COMM_WORLD, &cluster_num_node);
-	MPI_Comm_rank(MPI_COMM_WORLD, &my_node_id);
-	basicCode->num_nodes=cluster_num_node;
-	basicCode->nodeId=my_node_id;
+	//Assign cluster configurations to Epiphany
+	basicCode->num_nodes=configuration->nNodes;
+	basicCode->nodeId=configuration->myNode;
+	basicCode->globalActive=configuration->globalActive;
+	basicCode->localActive=configuration->localActive;
 
 	initialiseCores(basicCode, codeOnCore, configuration);
 	placeByteCode(basicCode, codeOnCore, configuration->intentActive);
