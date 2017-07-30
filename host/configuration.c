@@ -141,7 +141,7 @@ static void parseCommandLineArguments(struct interpreterconfiguration* configura
 					int cluster_num_node=configuration->nNodes;
 					int my_node_id=configuration->myNode;
 					int j, device_procs, total_procs=atoi(argv[++i]);
-					configuration->nNodes=total_procs/16+1;
+					configuration->nNodes=(total_procs-1)/16+1;
 					if (cluster_num_node*16 < total_procs) {
 						if (my_node_id==0) fprintf(stderr, "Insufficient number of cores in the cluster\n");
 						exit(0);
