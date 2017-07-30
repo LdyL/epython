@@ -980,8 +980,10 @@ static struct value_defn bcastReceiver(struct value_defn to_recv, int source, vo
     recvValue.dtype=SCALAR;
     //release local ecores and broadcast received value to them
 		for (i=1; i<TOTAL_CORES; i++) {
-			if (sharedData->core_ctrl[i].active) *(target_barrier_array[i]) = 1;
-      sendDataToDeviceCore(recvValue, i, 1);
+			if (sharedData->core_ctrl[i].active) {
+        *(target_barrier_array[i]) = 1;
+        sendDataToDeviceCore(recvValue, i, 1);
+      }
 		}
     return recvValue;
   } else {
