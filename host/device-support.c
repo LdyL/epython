@@ -77,8 +77,6 @@ static int resolveRank(int);
 static char* getEpiphanyExecutableFile(struct interpreterconfiguration*);
 static int doesFileExist(char*);
 static char * allocateChunkInSharedHeapMemory(size_t, struct core_ctrl *);
-static void printbuf(char *, int);
-static void printbinchar(char);
 
 /**
  * Loads up the code onto the appropriate Epiphany cores, sets up the state (Python bytecode, symbol table, data area etc)
@@ -805,22 +803,4 @@ static int resolveRank(int id) {
 	int rank;
 	rank = id/TOTAL_CORES;
 	return rank;
-}
-
-/**
- * Debugging function: Display the bits int the memory
- */
-static void printbuf(char *buf, int length) {
-	int i;
-	for (i=0; i<length; i++){
-		printbinchar(buf[i]);
-	}
-	printf("\n");
-}
-
-static void printbinchar(char c) {
-    for (int i = 7; i >= 0; --i) {
-        putchar( (c & (1 << i)) ? '1' : '0' );
-    }
-    printf(" ");
 }

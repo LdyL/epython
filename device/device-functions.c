@@ -640,7 +640,7 @@ void clearFreedStackFrames(char* targetPointer) {
 static void sendData(struct value_defn to_send, int target, char blocking) {
 	if (to_send.type == STRING_TYPE) raiseError(ERR_ONLY_SEND_INT_AND_REAL);
 	if (isLocal(target)) {
-		sendDataToDeviceCore(to_send, target-getLargestCoreId(target)*sharedData->nodeId, blocking);
+		sendDataToDeviceCore(to_send, target-TOTAL_CORES*sharedData->nodeId, blocking);
 	} else {
 	    if (!blocking) raiseError(ERR_NBSEND_NOT_SUPPORTED);
 		sendDataToHostProcess(to_send, target);
@@ -912,7 +912,7 @@ static void performBarrier_remote(volatile e_barrier_t barrier_array[], e_barrie
  * Broadcasts data, if this is the source then send it, all cores return the data (even the source)
  */
 static struct value_defn bcastData(struct value_defn to_send, int source, int totalProcesses) {
-  int myId_global=myId+getLargestCoreId(myId)*sharedData->nodeId;
+  int myId_global=myId+TOTAL_CORES*sharedData->nodeId;
   if (isLocal(source)) {
   	if (myId_global==source) {
       //perform remote broadcast send first
@@ -923,7 +923,7 @@ static struct value_defn bcastData(struct value_defn to_send, int source, int to
   			if (sharedData->core_ctrl[i].active) {
   				totalActioned++;
   				if (i == myId) continue;
-  				sendData(to_send, i+getLargestCoreId(i)*sharedData->nodeId, 1);
+  				sendData(to_send, i+TOTAL_CORES*sharedData->nodeId, 1);
   			}
   		}
   		return to_send;
