@@ -29,6 +29,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <ctype.h>
+#include <mpi.h>
 #include "configuration.h"
 #ifndef HOST_STANDALONE
 #include "device-support.h"
@@ -130,7 +131,21 @@ static void parseCommandLineArguments(struct interpreterconfiguration* configura
 					fprintf(stderr, "You must provide a number of device processes to use\n");
 					exit(0);
 				} else {
-					int j, device_procs=atoi(argv[++i]);
+					int cluster_num_node, my_node_id;
+					MPI_Comm_size(MPI_COMM_WORLD, &cluster_num_node);
+					MPI_Comm_rank(MPI_COMM_WORLD, &my_node_id);
+					int j, device_procs, total_procs=atoi(argv[++i]);
+					if (cluster_num_node*16 < total_procs) {
+						if (my_node_id==0) fprintf(stderr, "Insufficient number of cores in the cluster\n");
+						exit(0);
+					}
+					if ((my_node_id+1)*16 <= total_procs) {
+						device_procs = 16;
+					} else if (my_node_id*16 < total_procs) {
+						device_procs = total_procs - my_node_id*16;
+					} else {
+						device_procs = 0;
+					}
 					for (j=0;j<16;j++) {
 						configuration->intentActive[j]=j<device_procs ? 1 : 0;
 					}
