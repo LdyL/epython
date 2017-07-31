@@ -914,6 +914,7 @@ static void performBarrier_remote(volatile e_barrier_t barrier_array[], e_barrie
 static struct value_defn bcastData(struct value_defn to_send, int source, int totalProcesses) {
   int myId_global=myId+TOTAL_CORES*sharedData->nodeId;
   if (isLocal(source)) {
+    performBarrier(syncbarriers, sync_tgt_bars);
   	if (myId_global==source) {
       //perform remote broadcast send first
       if (sharedData->num_nodes > 1) bcastSender(to_send, myId);

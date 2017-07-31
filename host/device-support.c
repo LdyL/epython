@@ -651,10 +651,10 @@ static void __attribute__((optimize("O0"))) syncNodes(struct shared_basic * info
 			MPI_Recv(&recvSignal, 1, MPI_INT, i, BARRIER_SIG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 		}
 		for (i=1; i<size; i++) {
-			MPI_Send(&sendSignal, 1, MPI_INT, i, BARRIER_SIG, MPI_COMM_WORLD);
+			MPI_Ssend(&sendSignal, 1, MPI_INT, i, BARRIER_SIG, MPI_COMM_WORLD);
 		}
 	}	else {
-		MPI_Send(&sendSignal, 1, MPI_INT, 0, BARRIER_SIG, MPI_COMM_WORLD);
+		MPI_Ssend(&sendSignal, 1, MPI_INT, 0, BARRIER_SIG, MPI_COMM_WORLD);
 		MPI_Recv(&recvSignal, 1, MPI_INT, 0, BARRIER_SIG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 	}
 }
@@ -674,9 +674,9 @@ static void __attribute__((optimize("O0"))) remote_Bcast(struct shared_basic * i
 		for (i=0; i<size; i++) {
 			if (i!=myid) {
 				if (info->core_ctrl[coreId].data[4]==INT_TYPE) {
-					MPI_Send(info->core_ctrl[coreId].data, 1, MPI_INT, i, coreId_global, MPI_COMM_WORLD);
+					MPI_Ssend(info->core_ctrl[coreId].data, 1, MPI_INT, i, coreId_global, MPI_COMM_WORLD);
 				} else if (info->core_ctrl[coreId].data[4]==REAL_TYPE) {
-					MPI_Send(info->core_ctrl[coreId].data, 1, MPI_FLOAT, i, coreId_global, MPI_COMM_WORLD);
+					MPI_Ssend(info->core_ctrl[coreId].data, 1, MPI_FLOAT, i, coreId_global, MPI_COMM_WORLD);
 				}
 			}
 		}
