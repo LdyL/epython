@@ -1,10 +1,11 @@
 /*
-llustration of the cluster evironment testing by showing the Global coreId & nodeId
+llustration of the environmental native functions by printing
+the Global coreId & nodeId for all cores
 */
 
 from parallel import *
 
-if coreid()==0:
-    print "The cluster has "+str(numcores())+" cores in "+str(numnodes())+" node(s)."
-
 print "My global coreid: "+str(coreid())+", I am on node"+str(nodeid())+"."
+
+if coreid()==(numcores()-1):
+    print "The cluster has "+str(numcores())+" cores in "+str(numnodes())+" node(s)."

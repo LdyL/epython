@@ -61,10 +61,10 @@ static void checkStatusFlagsOfCore(struct shared_basic*, struct interpreterconfi
 static void deactivateCore(struct interpreterconfiguration*, int);
 static void startApplicableCores(struct shared_basic*, struct interpreterconfiguration*);
 static void timeval_subtract(struct timeval*, struct timeval*,  struct timeval*);
-static void displayCoreMessage(int, struct core_ctrl*);
-static void raiseError(int, struct core_ctrl*);
+static void displayCoreMessage(int, struct shared_basic*);
+static void raiseError(int, struct shared_basic*);
 static void stringConcatenate(int, struct core_ctrl*);
-static void inputCoreMessage(int, struct core_ctrl*);
+static void inputCoreMessage(int, struct shared_basic*);
 static void syncNodes(struct shared_basic*);
 static void remote_Bcast(struct shared_basic*, int);
 static void remoteP2P_Send(int, struct shared_basic*, MPI_Request *);
@@ -175,13 +175,13 @@ static void checkStatusFlagsOfCore(struct shared_basic * basicState, struct inte
 		if (basicState->core_ctrl[coreId].core_run == 0) {
 			deactivateCore(configuration, coreId);
 		} else if (basicState->core_ctrl[coreId].core_command == 1) {
-			displayCoreMessage(coreId, &basicState->core_ctrl[coreId]);
+			displayCoreMessage(coreId, basicState);
 			updateCoreWithComplete=1;
 		} else if (basicState->core_ctrl[coreId].core_command == 2) {
-			inputCoreMessage(coreId, &basicState->core_ctrl[coreId]);
+			inputCoreMessage(coreId, basicState);
 			updateCoreWithComplete=1;
 		} else if (basicState->core_ctrl[coreId].core_command == 3) {
-			raiseError(coreId, &basicState->core_ctrl[coreId]);
+			raiseError(coreId, basicState);
 			updateCoreWithComplete=1;
 		} else if (basicState->core_ctrl[coreId].core_command == 4) {
 			stringConcatenate(coreId, &basicState->core_ctrl[coreId]);
@@ -247,11 +247,12 @@ static void checkStatusFlagsOfCore(struct shared_basic * basicState, struct inte
  * Called when a core informs the host it has finished, optionally displays timing information
  */
 static void deactivateCore(struct interpreterconfiguration* configuration, int coreId) {
+	int g_coreId=coreId+TOTAL_CORES*configuration->myNode;
 	if (configuration->displayTiming) {
 		struct timeval tval_after, tval_result;
 		gettimeofday(&tval_after, NULL);
 		timeval_subtract(&tval_result, &tval_after, &tval_before[coreId]);
-		printf("Core %d completed in %ld.%06ld seconds\n", coreId, (long int)tval_result.tv_sec, (long int)tval_result.tv_usec);
+		printf("Core %d completed in %ld.%06ld seconds\n", g_coreId, (long int)tval_result.tv_sec, (long int)tval_result.tv_usec);
 	}
 	active[coreId]=0;
 	totalActive--;
@@ -515,12 +516,13 @@ static char * allocateChunkInSharedHeapMemory(size_t size, struct core_ctrl * co
 /**
  * The core has raised an error
  */
-static void raiseError(int coreId, struct core_ctrl * core) {
+static void raiseError(int coreId, struct shared_basic * info) {
+	int g_coreId=coreId+TOTAL_CORES*info->nodeId;
 	unsigned char errorCode;
-    memcpy(&errorCode, &core->data[1], sizeof(unsigned char));
+    memcpy(&errorCode, &info->core_ctrl[coreId].data[1], sizeof(unsigned char));
     char* errorMessage=translateErrorCodeToMessage(errorCode);
 	if (errorMessage != NULL) {
-        fprintf(stderr, "Error from core %d: %s\n", coreId, errorMessage);
+        fprintf(stderr, "Error from core %d: %s\n", g_coreId, errorMessage);
         free(errorMessage);
 	}
 }
@@ -528,15 +530,16 @@ static void raiseError(int coreId, struct core_ctrl * core) {
 /**
  * Inputs a message from the user, with some optional displayed message.
  */
-static void __attribute__((optimize("O0"))) inputCoreMessage(int coreId, struct core_ctrl * core) {
+static void __attribute__((optimize("O0"))) inputCoreMessage(int coreId, struct shared_basic * info) {
+	int g_coreId=coreId+TOTAL_CORES*info->nodeId;
 	char inputvalue[1000];
 	unsigned int relativeLocation;
-	if (core->data[0] == STRING_TYPE) {
-		memcpy(&relativeLocation, &core->data[1], sizeof(unsigned int));
-		char * message=core->host_shared_data_start+relativeLocation;
-		printf("[device %d] %s", coreId, message);
+	if (info->core_ctrl[coreId].data[0] == STRING_TYPE) {
+		memcpy(&relativeLocation, &info->core_ctrl[coreId].data[1], sizeof(unsigned int));
+		char * message=info->core_ctrl[coreId].host_shared_data_start+relativeLocation;
+		printf("[device %d] %s", g_coreId, message);
 	} else {
-		printf("device %d> ", coreId);
+		printf("device %d> ", g_coreId);
 	}
 	errorCheck(scanf("%[^\n]", inputvalue), "Getting user input");
 	int inputType=getTypeOfInput(inputvalue);
@@ -545,19 +548,19 @@ static void __attribute__((optimize("O0"))) inputCoreMessage(int coreId, struct 
 	while ( (c = getchar()) != '\n' && c != EOF ) { }
 
 	if (inputType==INT_TYPE) {
-		core->data[0]=INT_TYPE;
+		info->core_ctrl[coreId].data[0]=INT_TYPE;
 		int iv=atoi(inputvalue);
-		memcpy(&core->data[1], &iv, sizeof(int));
+		memcpy(&info->core_ctrl[coreId].data[1], &iv, sizeof(int));
 	} else if (inputType==REAL_TYPE) {
-		core->data[0]=REAL_TYPE;
+		info->core_ctrl[coreId].data[0]=REAL_TYPE;
 		float fv=atof(inputvalue);
-		memcpy(&core->data[1], &fv, sizeof(float));
+		memcpy(&info->core_ctrl[coreId].data[1], &fv, sizeof(float));
 	} else {
-		core->data[0]=STRING_TYPE;
-		char * target=allocateChunkInSharedHeapMemory(strlen(inputvalue) + 1, core);
+		info->core_ctrl[coreId].data[0]=STRING_TYPE;
+		char * target=allocateChunkInSharedHeapMemory(strlen(inputvalue) + 1, &info->core_ctrl[coreId]);
 		strcpy(target, inputvalue);
-		relativeLocation=target-core->host_shared_data_start;
-		memcpy(&core->data[1], &relativeLocation, sizeof(unsigned int));
+		relativeLocation=target-info->core_ctrl[coreId].host_shared_data_start;
+		memcpy(&info->core_ctrl[coreId].data[1], &relativeLocation, sizeof(unsigned int));
 	}
 }
 
@@ -584,33 +587,34 @@ static int getTypeOfInput(char * input) {
 /**
  * Displays a message from the core
  */
-static void displayCoreMessage(int coreId, struct core_ctrl * core) {
-	if (((core->data[0] >> 7) & 1) == 1) {
+static void displayCoreMessage(int coreId, struct shared_basic * info) {
+	int g_coreId=coreId+TOTAL_CORES*info->nodeId;
+	if (((info->core_ctrl[coreId].data[0] >> 7) & 1) == 1) {
 		int y;
-        memcpy(&y, &(core->data[1]), sizeof(int));
-        char t=core->data[0] & 0x1F;
-        char dt=core->data[0] >> 5 & 0x3;
-		printf("[device %d] 0x%x points to %s %s\n", coreId, y,
+        memcpy(&y, &(info->core_ctrl[coreId].data[1]), sizeof(int));
+        char t=info->core_ctrl[coreId].data[0] & 0x1F;
+        char dt=info->core_ctrl[coreId].data[0] >> 5 & 0x3;
+		printf("[device %d] 0x%x points to %s %s\n", g_coreId, y,
 				t==0 ? "integer" : t==1 ? "floating point" : t==2 ? "boolean" : t==3 ? "none" : t==4 ? "function" : "unknown", dt==0 ? "scalar" : "array");
-	} else if (core->data[0] == 0) {
+	} else if (info->core_ctrl[coreId].data[0] == 0) {
 		int y;
-        memcpy(&y, &(core->data[1]), sizeof(int));
-		printf("[device %d] %d\n", coreId, y);
-	} else if (core->data[0] == 1) {
+        memcpy(&y, &(info->core_ctrl[coreId].data[1]), sizeof(int));
+		printf("[device %d] %d\n", g_coreId, y);
+	} else if (info->core_ctrl[coreId].data[0] == 1) {
 		float y;
-        memcpy(&y, &(core->data[1]), sizeof(float));
-		printf("[device %d] %f\n", coreId, y);
-	} else if (core->data[0] == 3) {
+        memcpy(&y, &(info->core_ctrl[coreId].data[1]), sizeof(float));
+		printf("[device %d] %f\n", g_coreId, y);
+	} else if (info->core_ctrl[coreId].data[0] == 3) {
 		int y;
-        memcpy(&y, &(core->data[1]), sizeof(int));
-		printf("[device %d] %s\n", coreId, y> 0 ? "true" : "false");
-	} else if (core->data[0] == 4) {
-		printf("[device %d] NONE\n", coreId);
-	} else if (core->data[0] == 2) {
+        memcpy(&y, &(info->core_ctrl[coreId].data[1]), sizeof(int));
+		printf("[device %d] %s\n", g_coreId, y> 0 ? "true" : "false");
+	} else if (info->core_ctrl[coreId].data[0] == 4) {
+		printf("[device %d] NONE\n", g_coreId);
+	} else if (info->core_ctrl[coreId].data[0] == 2) {
 		unsigned int relativeLocation;
-		memcpy(&relativeLocation, &core->data[1], sizeof(unsigned int));
-		char * message=core->host_shared_data_start+relativeLocation;
-		printf("[device %d] %s\n", coreId, message);
+		memcpy(&relativeLocation, &info->core_ctrl[coreId].data[1], sizeof(unsigned int));
+		char * message=info->core_ctrl[coreId].host_shared_data_start+relativeLocation;
+		printf("[device %d] %s\n", g_coreId, message);
 	}
 }
 
