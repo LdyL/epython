@@ -6,7 +6,7 @@ and from core 16 to core 1.
 from parallel import *
 
 if coreid()==0:
-  val=20.0
+  val=20
   print "[core 0]sending value "+str(val)+" to core 17"
   send(val, 17)
 if coreid()==17:
