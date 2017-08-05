@@ -1,19 +1,19 @@
 /*
-Illustration of cross P2P blocking send from core 0 to core 17
-and from core 16 to core 1.
+Illustration of cross P2P blocking message passing from core 1 to core 18
+and from core 17 to core 2.
 */
 
 from parallel import *
 
-if coreid()==0:
-  val=20
-  print "[core 0]sending value "+str(val)+" to core 17"
-  send(val, 17)
-if coreid()==17:
-  print "[core 17]Got value "+str(recv(0))+" from core 0"
-if coreid()==16:
-  val=30.0
-  print "[core 16]sending value "+str(val)+" to core 1"
-  send(val, 1)
 if coreid()==1:
-  print "[core 1]Got value "+str(recv(16))+" from core 16"
+  val=20
+  print "[core 1]sending value "+str(val)+" to core 18"
+  send(val, 18)
+if coreid()==18:
+  print "[core 18]Got value "+str(recv(0))+" from core 0"
+if coreid()==17:
+  val=30.0
+  print "[core 17]sending value "+str(val)+" to core 2"
+  send(val, 2)
+if coreid()==2:
+  print "[core 2]Got value "+str(recv(17))+" from core 17"
