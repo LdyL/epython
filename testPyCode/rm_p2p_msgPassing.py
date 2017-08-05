@@ -10,7 +10,7 @@ if coreid()==1:
   print "[core 1]sending value "+str(val)+" to core 18"
   send(val, 18)
 if coreid()==18:
-  print "[core 18]Got value "+str(recv(0))+" from core 0"
+  print "[core 18]Got value "+str(recv(1))+" from core 1"
 if coreid()==17:
   val=30.0
   print "[core 17]sending value "+str(val)+" to core 2"
