@@ -244,7 +244,7 @@ static void parseCoreActiveInfo(struct interpreterconfiguration* configuration, 
  * Displays the help message with usage information
  */
 static void displayHelp() {
-	printf("Epiphany Python version %s\n", VERSION_IDENT);
+	printf("Epiphany Python version %sa (Cluster supported)\n", VERSION_IDENT);
 	printf("epython [arguments] filename\n\nWhere filename is the source code to execute by default on all cores\n\nArguments\n--------\n");
 #ifndef HOST_STANDALONE
 	printf("-c placement   Specify core placement; can be a single id, all, a range (a:b) or a list (a,b,c,d)\n");
@@ -254,8 +254,8 @@ static void displayHelp() {
 	printf("-codecore      Placement code on each core (default up to %d bytes length)\n", CORE_CODE_MAX_SIZE);
 	printf("-codeshared    Placement code in shared memory (automatic after %d bytes in length)\n", CORE_CODE_MAX_SIZE);
 	printf("-datashared    Data (arrays and strings) stored in shared memory, storage on core is default\n");
-        printf("-elf           Use ELF device executable\n");
-        printf("-srec          Use SREC device executable\n");
+  printf("-elf           Use ELF device executable\n");
+  printf("-srec          Use SREC device executable\n");
 #endif
 	printf("-s             Display parse statistics\n");
 	printf("-pp            Display preprocessed code\n");
