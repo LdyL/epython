@@ -71,6 +71,7 @@ struct interpreterconfiguration* readConfiguration(int argc, char *argv[]) {
 static void parseCommandLineArguments(struct interpreterconfiguration* configuration, int argc, char *argv[]) {
 	if (argc == 1) {
 		if (configuration->myNode==0) displayHelp();
+		MPI_Finalize();
 		exit(0);
 	} else {
 #ifdef HOST_STANDALONE
@@ -108,6 +109,7 @@ static void parseCommandLineArguments(struct interpreterconfiguration* configura
 			} else if (areStringsEqualIgnoreCase(argv[i], "-o")) {
 				if (i+1 ==argc) {
 					fprintf(stderr, "When specifying to output compiled bytes then you must provide a filename for this\n");
+					MPI_Finalize();
 					exit(0);
 				} else {
 					configuration->compiledByteFilename=argv[++i];
@@ -115,20 +117,24 @@ static void parseCommandLineArguments(struct interpreterconfiguration* configura
 			} else if (areStringsEqualIgnoreCase(argv[i], "-l")) {
 				if (i+1 ==argc) {
 					fprintf(stderr, "When specifying to load from a byte file then you must provide a filename for this\n");
+					MPI_Finalize();
 					exit(0);
 				} else {
 					configuration->loadByteFilename=argv[++i];
 				}
 			} else if (areStringsEqualIgnoreCase(argv[i], "-help")) {
 				if (configuration->myNode==0) displayHelp();
+				MPI_Finalize();
 				exit(0);
 			} else if (areStringsEqualIgnoreCase(argv[i], "-h")) {
 				if (i+1 ==argc) {
 					fprintf(stderr, "You must provide a number of host processes to use\n");
+					MPI_Finalize();
 					exit(0);
 				} else {
 					if (coreplacement) {
 						fprintf(stderr, "Can not specify explicit core placement and have host virtual processes\n");
+						MPI_Finalize();
 						exit(0);
 					}
 					configuration->hostProcs=atoi(argv[++i]);
@@ -136,6 +142,7 @@ static void parseCommandLineArguments(struct interpreterconfiguration* configura
 			} else if (areStringsEqualIgnoreCase(argv[i], "-d")) {
 				if (i+1 ==argc) {
 					fprintf(stderr, "You must provide a number of device processes to use\n");
+					MPI_Finalize();
 					exit(0);
 				} else {
 					int cluster_num_node=configuration->nNodes;
@@ -144,6 +151,7 @@ static void parseCommandLineArguments(struct interpreterconfiguration* configura
 					configuration->nNodes=(total_procs-1)/16+1;
 					if (cluster_num_node*16 < total_procs) {
 						if (my_node_id==0) fprintf(stderr, "Insufficient number of cores in the cluster\n");
+						MPI_Finalize();
 						exit(0);
 					}
 					configuration->globalActive=total_procs;
@@ -162,6 +170,7 @@ static void parseCommandLineArguments(struct interpreterconfiguration* configura
 			} else if (areStringsEqualIgnoreCase(argv[i], "-pipein")) {
 				if (i+1 ==argc) {
 					fprintf(stderr, "You must provide the Python code contents with the -pipein flag\n");
+					MPI_Finalize();
 					exit(0);
 				} else {
 					configuration->pipedInContents=argv[++i];
@@ -169,10 +178,12 @@ static void parseCommandLineArguments(struct interpreterconfiguration* configura
 			} else if (areStringsEqualIgnoreCase(argv[i], "-c")) {
 				if (i+1 ==argc) {
 					fprintf(stderr, "When specifying core placement you must provide arguments\n");
+					MPI_Finalize();
 					exit(0);
 				} else {
 					if (configuration->hostProcs > 0) {
 						fprintf(stderr, "Can only specify explicit core placement with no host virtual processes\n");
+						MPI_Finalize();
 						exit(0);
 					}
 					coreplacement=1;
@@ -181,6 +192,7 @@ static void parseCommandLineArguments(struct interpreterconfiguration* configura
 			} else {
 				if (configuration->filename != NULL) {
 					fprintf(stderr, "Only one filename can be provided, you have suppled '%s' and '%s'\n", configuration->filename, argv[i]);
+					MPI_Finalize();
 					exit(0);
 				} else {
 					configuration->filename=argv[i];
@@ -189,6 +201,7 @@ static void parseCommandLineArguments(struct interpreterconfiguration* configura
 		}
 		if (configuration->loadByteFilename == NULL && configuration->filename == NULL && configuration->pipedInContents == NULL) {
 			fprintf(stderr, "You must supply a file to run as an argument, see -h for details\n");
+			MPI_Finalize();
 			exit(0);
 		}
 #ifndef HOST_STANDALONE

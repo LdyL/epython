@@ -319,6 +319,7 @@ static char* getEpiphanyExecutableFile(struct interpreterconfiguration* configur
 		sprintf(fullFilename, "%s.srec", EPIPHANY_BINARY_FILE);
 	} else {
 		fprintf(stderr, "Neither ELF nore SREC file formats selected for device executable\n");
+		MPI_Finalize();
 		exit(0);
 	}
 	if (doesFileExist(fullFilename)) return fullFilename;
@@ -327,6 +328,7 @@ static char* getEpiphanyExecutableFile(struct interpreterconfiguration* configur
 	if (doesFileExist(binLocation)) return binLocation;
 	fprintf(stderr, "Can not device binary '%s' in the local directory or binary (%s) directory\n",
 			fullFilename, BIN_PATH);
+	MPI_Finalize();
 	exit(0);
 }
 

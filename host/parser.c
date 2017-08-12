@@ -79,6 +79,7 @@ int yylex(void);
 
 void yyerror (char const *msg) {
 	fprintf(stderr, "%s at line %d of file %s\n", msg, line_num, parsing_filename);
+	MPI_Finalize();
 	exit(0);
 }
 
@@ -256,7 +257,7 @@ union YYSTYPE
 
 	int integer;
 	unsigned char uchar;
-	float real;	
+	float real;
 	struct memorycontainer * data;
 	char *string;
 	struct stack_t * stack;
@@ -2341,4 +2342,3 @@ yyreturn:
   return yyresult;
 }
 #line 233 "epython.y" /* yacc.c:1906  */
-

@@ -1008,6 +1008,7 @@ static unsigned short getVariableId(char * name, int allowAdd) {
 		return addVariable(name);
 	} else {
 		fprintf(stderr, "Can not find variable name %s at line %d, you must declare this before use\n", name, line_num);
+		MPI_Finalize();
 		exit(0);
 	}
 }

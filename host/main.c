@@ -237,6 +237,7 @@ static char * getSourceFileContents(char * filename) {
 				char* entirePathForFile=getIncludeFileWithPath(newFilename);
 				if (entirePathForFile == NULL) {
 					fprintf(stderr, "Opening of Python file '%s' failed, are you sure this file exists?\n", newFilename);
+					MPI_Finalize();
 					exit(0);
 				}
 				if (!hasSourceFileAlreadyBeenIncluded(entirePathForFile)) {
@@ -277,6 +278,7 @@ static char * getSourceFileContents(char * filename) {
 		return contents;
 	} else {
 		fprintf(stderr, "Opening of Python file '%s' failed, are you sure this file exists?\n", filename);
+		MPI_Finalize();
 		exit(0);
 	}
 }
@@ -374,6 +376,7 @@ void loadByteCode(char * loadByteFilename) {
 		fclose(byteFile);
 	} else {
 		fprintf(stderr, "Opening of byte code file '%s' failed, are you sure this file exists?\n", loadByteFilename);
+		MPI_Finalize();
 		exit(0);
 	}
 }
@@ -393,6 +396,7 @@ void writeOutByteCode(char * compiledByteFilename) {
 		fclose(byteFile);
 	} else {
 		fprintf(stderr, "Writing byte code to file '%s' failed\n", compiledByteFilename);
+		MPI_Finalize();
 		exit(0);
 	}
 }
