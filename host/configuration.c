@@ -70,7 +70,7 @@ struct interpreterconfiguration* readConfiguration(int argc, char *argv[]) {
  */
 static void parseCommandLineArguments(struct interpreterconfiguration* configuration, int argc, char *argv[]) {
 	if (argc == 1) {
-		displayHelp();
+		if (configuration->myNode==0) displayHelp();
 		exit(0);
 	} else {
 #ifdef HOST_STANDALONE
@@ -120,7 +120,7 @@ static void parseCommandLineArguments(struct interpreterconfiguration* configura
 					configuration->loadByteFilename=argv[++i];
 				}
 			} else if (areStringsEqualIgnoreCase(argv[i], "-help")) {
-				displayHelp();
+				if (configuration->myNode==0) displayHelp();
 				exit(0);
 			} else if (areStringsEqualIgnoreCase(argv[i], "-h")) {
 				if (i+1 ==argc) {
