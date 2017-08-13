@@ -71,6 +71,7 @@
 #include <stdlib.h>
 #include <stddef.h>
 #include <stdio.h>
+#include <mpi.h>
 
 extern int line_num;
 extern char * parsing_filename;

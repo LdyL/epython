@@ -28,6 +28,7 @@
 #include <stddef.h>
 #include <string.h>
 #include <stdio.h>
+#include <mpi.h>
 #include "memorymanager.h"
 
 // This is set at the end of parsing to be the entire byte code representation of the users Python program
@@ -165,6 +166,7 @@ static unsigned short findLocationOfLineNumber(struct lineDefinition * root, int
 		root=root->next;
 	}
 	fprintf(stderr, "Can not find line %d in goto\n", lineNumber);
+  MPI_Finalize();
 	exit(0);
 }
 
@@ -181,6 +183,7 @@ static unsigned short findLocationOfFunctionName(struct lineDefinition * root, c
 	} else {
         fprintf(stderr, "Can not find function '%s' in function call at line number %d\n", functionName, line_num_for_error);
 	}
+  MPI_Finalize();
 	exit(0);
 }
 

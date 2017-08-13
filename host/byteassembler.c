@@ -29,6 +29,7 @@
 #include <string.h>
 #include <stddef.h>
 #include <ctype.h>
+#include <mpi.h>
 #include "memorymanager.h"
 #include "basictokens.h"
 #include "byteassembler.h"
@@ -182,6 +183,7 @@ struct memorycontainer* appendNativeCallFunctionStatement(char* functionName, st
     	position=appendStatement(memoryContainer, NATIVE_FN_RTL_DEREFERENCE, position);
     } else {
         fprintf(stderr, "Native function call of '%s' is not found\n", functionName);
+				MPI_Finalize();
         exit(EXIT_FAILURE);
     }
     unsigned short numArgs=args !=NULL ? (unsigned short) getStackSize(args) : singleArg != NULL ? 1 : 0;
