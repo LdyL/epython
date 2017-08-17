@@ -32,8 +32,9 @@ The extended ePython has been developed by Dongyu Liang on the basis of Dr. Nick
 
 ##Hello world
 
-  Create a file called hello, then put in the lines
-  print "Hello world"
+  In the shared directory, create a file called hello, then put in the lines
+  
+    print "Hello world"
 
   save it, and execute epython hello (or ./epython.sh hello if you have not done make install.)
 
