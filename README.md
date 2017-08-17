@@ -1,4 +1,4 @@
-#The Extended ePython for Parallella cluster
+#The extended ePython for Parallella cluster
 
 This is an Python interpreter used for parallel Python interpreting on Internet connected Epiphanies.
 This version is backwards-compatible for all basic communicational calls, the syntax of original parallel Python remains unchanged.
