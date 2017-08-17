@@ -1,6 +1,6 @@
-#The Extended Epiphany Python
+#The Extended Epiphany Python for Parallella cluster
 
-This is an Python interpreter used for parallel Python interpreting on Internet connected Epiphany cluster.
+This is an Python interpreter used for parallel Python interpreting on Internet connected Epiphanies.
 This version is backwards-compatible for all basic communicational calls, the syntax of original parallel Python remains unchanged.
 More e-cores can be transparently used with the extended ePython as long as enough Parallellas are connected.
 
@@ -23,6 +23,8 @@ The extended ePython has been developed by Dongyu Liang on the basis of Dr. Nick
     Then sudo make install followed by starting a new bash session (execute bash at the command line.)
 
 ##Configuring cluster
+
+    Connect all Parallella boards into a LAN or the Internet
 
     Add the host name or IP address of Parallella nodes into the .mpi_hostfile in the master node
 
@@ -51,10 +53,6 @@ The extended ePython has been developed by Dongyu Liang on the basis of Dr. Nick
 
 (you might want to place this in your .bashrc file)
 
-##64 cores
-
-The extended ePython has been developed and tested on a Epiphany cluster with 16-core nodes, if you have a 64 core chip machine then it should work (still on 16 cores), and it should be trivial to edit the source and linker script to support the full 64 cores.
-
 ##Additional information for installing
 
 MPI is required. This version has been tested with the preinstalled Open MPI of the Parabuntu
@@ -66,3 +64,9 @@ In order to include files (required for parallel functions) you must either run 
 Issuing export export EPYTHONPATH=$EPYTHONPATH:`pwd` in the epython directory will set this to point to the current directory. You can also modify your ~/.bashrc file to contain a similiar command.
 
 For more information about installing ePython refer [here](docs/tutorial1.md), for upgrading ePython refer [here](docs/installupgrade.md)
+
+##Degenerated use
+
+    Pass -d 16 argument to use the single Parallella board (master node)
+    
+  Notice that Garbege collector has been disabled.
