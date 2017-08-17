@@ -22,7 +22,7 @@ fi
 
 if [[ "$OS_VER" -ge "14" || "$OS_MAJ" -gt "3" ]]
 then
-$FILE "$@"
+mpirun -x LD_LIBRARY_PATH -x EPIPHANY_HDF=${EHDF} -x EPYTHONPATH -np 2 --hostfile .mpi_hostfile $FILE "$@"
 else
-sudo -E LD_LIBRARY_PATH=${ELIBS} EPIPHANY_HDF=${EHDF} $FILE -srec "$@"
+echo "ERROR - Unsupported hardware"
 fi
