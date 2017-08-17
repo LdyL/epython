@@ -1,0 +1,7 @@
+# The hostfile for Open MPI
+
+# The master node
+parallella0 slots=1
+
+# The slave node(s)
+parallella1 slots=1
