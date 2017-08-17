@@ -8,19 +8,53 @@ The extended ePython has been developed by Dongyu Liang on the basis of Dr. Nick
 
 ##Installation
 
-On master node:
+  On master node:
 
-change the -np argument of mpirun in epython.sh into the number of your parallella node
+    change the -np argument of mpirun in epython.sh into the number of your parallella node
 
-Type make
+    Type make
 
-Then sudo make install followed by starting a new bash session (execute bash at the command line.)
+    Then sudo make install followed by starting a new bash session (execute bash at the command line.)
 
-On slave node(s):
+  On slave node(s):
 
-Type make
+    Type make
 
-Then sudo make install followed by starting a new bash session (execute bash at the command line.)
+    Then sudo make install followed by starting a new bash session (execute bash at the command line.)
+
+##Configuring cluster
+
+  Add the host name or IP address of Parallella nodes into the .mpi_hostfile in the master node
+
+  Set password less SSH for each host
+
+  Remmber to run the ePython in the directory with a .mpi_hostfile in it
+
+##Hello world
+  Create a file called hello, then put in the lines
+  print "Hello world"
+
+  save it, and execute epython hello (or ./epython.sh hello if you have not done make install.)
+
+  Each core within the cluster will display the Hello world message to the screen along with their core id
+
+  For more information about first steps with ePython refer [here](docs/tutorial1.md), for more advanced ePython usage then follow the  tutorials in the [docs directory](docs) which cover writing parallel Python code on the Epiphany.
+
+##Troubleshooting
+
+  Often these are set by default, but if it complains that it can not find e-gcc or the libraries, then you will need to set these  environment variables:
+
+  export PATH=/opt/adapteva/esdk/tools/e-gnu/bin:$PATH
+  export EPIPHANY_HOME=/opt/adapteva/esdk
+
+(you might want to place this in your .bashrc file)
+
+##64 cores
+
+The extended ePython has been developed and tested on a Epiphany cluster with 16-core nodes, if you have a 64 core chip machine then it should work (still on 16 cores), and it should be trivial to edit the source and linker script to support the full 64 cores.
+
+##Additional information for installing
+MPI is required. This version has been tested with the preinstalled Open MPI of the Parabuntu
 
 If you do not install it then you can still run epython from the current directory, as ./epython.sh but ensure that epython-device.elf is in the current directory when you run the interpreter. The epython.sh script will detect whether to run as sudo (earlier versions of the parallella OS) or not (later versions.)
 
@@ -29,41 +63,3 @@ In order to include files (required for parallel functions) you must either run 
 Issuing export export EPYTHONPATH=$EPYTHONPATH:`pwd` in the epython directory will set this to point to the current directory. You can also modify your ~/.bashrc file to contain a similiar command.
 
 For more information about installing ePython refer [here](docs/tutorial1.md), for upgrading ePython refer [here](docs/installupgrade.md)
-
-##Configuring cluster
-
-Add the host name or IP address of Parallella nodes into the .mpi_hostfile in the master node
-
-Set password less SSH for each host
-
-Remmber to run the ePython in the directory with a .mpi_hostfile in it
-
-##Hello world
-Create a file called hello, then put in the lines
-print "Hello world"
-
-save it, and execute epython hello (or ./epython.sh hello if you have not done make install.)
-
-Each core will display the Hello world message to the screen along with their core id
-
-For more information about first steps with ePython refer [here](docs/tutorial1.md), for more advanced ePython usage then follow the tutorials in the [docs directory](docs) which cover writing parallel Python code on the Epiphany.
-
-##Troubleshooting
-
-Often these are set by default, but if it complains that it can not find e-gcc or the libraries, then you will need to set these environment variables:
-
-export PATH=/opt/adapteva/esdk/tools/e-gnu/bin:$PATH
-export EPIPHANY_HOME=/opt/adapteva/esdk
-
-(you might want to place this in your .bashrc file)
-
-##64 cores
-
-The extended ePython has been developed and tested on a Epiphany cluster with 16-core nodes, if you have a 64 core chip machine then it should work (still on 16 cores), and it should be trivial to edit the source and linker script to support the full 64 cores.
-
-##Rebuilding the parser/lexer
-To rebuild the parser and lexer too, then execute *make full*
-
-##SREC and ELF
-
-The device executable is built in both SREC and ELF format, as of 2016 the loading of SREC on the Epiphany is deprecated and will be removed from later SDK releases. You can choose which to load via the -elf and -srec command line arguments. ELF is the default for ePython, apart from very old Epiphany SDK versions which support SREC.
