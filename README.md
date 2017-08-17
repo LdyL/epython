@@ -1,11 +1,22 @@
-#Epiphany Python
-This is a Python interpreter designed for low memory many core chips such as the Epiphany co-processor and supports the writing of parallel codes for these architectures. The interpreter and runtime resident in the memory of the actual core is only 24Kb, with the remainder of core memory available for the user's byte code and data. This 24Kb implementation is standalone which means that ePython works both with many core processors executing independently and those working as co-processors with some extra shared memory between the host. Hence ePython is specifically designed to be a very small, tight implementation of the imperative aspects of Python with extensions (via Python modules) for parallelism such as messaging, task farming, interoperability with a full Python interpreter (such as CPython) running on the host and many other features. ePython also supports full memory management and garbage collection.
+#The Extended Epiphany Python
 
-ePython has been developed by <a href="https://www.epcc.ed.ac.uk/about/staff/dr-nick-brown">Nick Brown</a> and is [licenced](LICENCE) under BSD-2.
+This is an Python interpreter used for parallel Python interpreting on Internet connected Epiphany cluster.
+This version is backwards-compatible, the syntax of original parallel Python remains unchanged.
+More e-cores can be transparently used with the extended ePython as long as enough Parallellas are connected.
+Interoperability with a full Python interpreter and garbage collection have been disabled
+
+The extended ePython has been developed by Dongyu Liang on the basis of Dr. Nick Brown's original ePython [licenced](LICENCE) under BSD-2.
 
 ##Installation
+
+On master node:
+change the -np argument of mpirun in epython.sh into the number of your parallella node
 Type make
-If you wish to install it (into the bin directory) then sudo make install followed by starting a new bash session (execute bash at the command line.)
+Then sudo make install followed by starting a new bash session (execute bash at the command line.)
+
+On slave node(s):
+Type make
+Then sudo make install followed by starting a new bash session (execute bash at the command line.)
 
 If you do not install it then you can still run epython from the current directory, as ./epython.sh but ensure that epython-device.elf is in the current directory when you run the interpreter. The epython.sh script will detect whether to run as sudo (earlier versions of the parallella OS) or not (later versions.)
 
@@ -14,6 +25,12 @@ In order to include files (required for parallel functions) you must either run 
 Issuing export export EPYTHONPATH=$EPYTHONPATH:`pwd` in the epython directory will set this to point to the current directory. You can also modify your ~/.bashrc file to contain a similiar command.
 
 For more information about installing ePython refer [here](docs/tutorial1.md), for upgrading ePython refer [here](docs/installupgrade.md)
+
+##Configuring cluster
+
+Add the host name or IP address of Parallella nodes into the .mpi_hostfile in the master node
+Set password less SSH for each host
+Remmber to run the ePython in the directory with a .mpi_hostfile in it
 
 ##Hello world
 Create a file called hello, then put in the lines
@@ -36,7 +53,7 @@ export EPIPHANY_HOME=/opt/adapteva/esdk
 
 ##64 cores
 
-ePython has been developed and tested on a 16 core Epiphany machine, if you have a 64 core chip machine then it should work (still on 16 cores), and it should be trivial to edit the source and linker script to support the full 64 cores.
+The extended ePython has been developed and tested on a Epiphany cluster with 16-core nodes, if you have a 64 core chip machine then it should work (still on 16 cores), and it should be trivial to edit the source and linker script to support the full 64 cores.
 
 ##Rebuilding the parser/lexer
 To rebuild the parser and lexer too, then execute *make full*
