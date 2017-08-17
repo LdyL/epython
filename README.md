@@ -24,13 +24,14 @@ The extended ePython has been developed by Dongyu Liang on the basis of Dr. Nick
 
 ##Configuring cluster
 
-  Add the host name or IP address of Parallella nodes into the .mpi_hostfile in the master node
+    Add the host name or IP address of Parallella nodes into the .mpi_hostfile in the master node
 
-  Set password less SSH for each host
+    Set password less SSH for each host
 
-  Remmber to run the ePython in the directory with a .mpi_hostfile in it
+    Remember to run the ePython in the directory with a .mpi_hostfile in it
 
 ##Hello world
+
   Create a file called hello, then put in the lines
   print "Hello world"
 
@@ -54,6 +55,7 @@ The extended ePython has been developed by Dongyu Liang on the basis of Dr. Nick
 The extended ePython has been developed and tested on a Epiphany cluster with 16-core nodes, if you have a 64 core chip machine then it should work (still on 16 cores), and it should be trivial to edit the source and linker script to support the full 64 cores.
 
 ##Additional information for installing
+
 MPI is required. This version has been tested with the preinstalled Open MPI of the Parabuntu
 
 If you do not install it then you can still run epython from the current directory, as ./epython.sh but ensure that epython-device.elf is in the current directory when you run the interpreter. The epython.sh script will detect whether to run as sudo (earlier versions of the parallella OS) or not (later versions.)
