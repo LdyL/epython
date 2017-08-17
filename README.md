@@ -1,21 +1,25 @@
 #The Extended Epiphany Python
 
 This is an Python interpreter used for parallel Python interpreting on Internet connected Epiphany cluster.
-This version is backwards-compatible, the syntax of original parallel Python remains unchanged.
+This version is backwards-compatible for all basic communicational calls, the syntax of original parallel Python remains unchanged.
 More e-cores can be transparently used with the extended ePython as long as enough Parallellas are connected.
-Interoperability with a full Python interpreter and garbage collection have been disabled
 
 The extended ePython has been developed by Dongyu Liang on the basis of Dr. Nick Brown's original ePython [licenced](LICENCE) under BSD-2.
 
 ##Installation
 
 On master node:
+
 change the -np argument of mpirun in epython.sh into the number of your parallella node
+
 Type make
+
 Then sudo make install followed by starting a new bash session (execute bash at the command line.)
 
 On slave node(s):
+
 Type make
+
 Then sudo make install followed by starting a new bash session (execute bash at the command line.)
 
 If you do not install it then you can still run epython from the current directory, as ./epython.sh but ensure that epython-device.elf is in the current directory when you run the interpreter. The epython.sh script will detect whether to run as sudo (earlier versions of the parallella OS) or not (later versions.)
@@ -29,7 +33,9 @@ For more information about installing ePython refer [here](docs/tutorial1.md), f
 ##Configuring cluster
 
 Add the host name or IP address of Parallella nodes into the .mpi_hostfile in the master node
+
 Set password less SSH for each host
+
 Remmber to run the ePython in the directory with a .mpi_hostfile in it
 
 ##Hello world
