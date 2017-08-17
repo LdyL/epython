@@ -10,7 +10,7 @@ The extended ePython has been developed by Dongyu Liang on the basis of Dr. Nick
 
   On master node:
 
-    change the -np argument of mpirun in epython.sh into the number of your parallella node
+    Change the -np argument of mpirun in epython.sh into the number of your parallella node
 
     Type make
 
@@ -24,13 +24,13 @@ The extended ePython has been developed by Dongyu Liang on the basis of Dr. Nick
 
 ##Configuring cluster
 
-    Connect all Parallella boards into a LAN or the Internet
+    Connect all Parallella boards into a LAN or the Internet.
 
-    Add the host name or IP address of Parallella nodes into the .mpi_hostfile in the master node
+    Add the host name or IP address of Parallella nodes into the .mpi_hostfile in the master node.
 
-    Set password less SSH for each host
+    Set password less SSH for each host.
 
-    Remember to run the ePython in the directory with a .mpi_hostfile in it
+    Remember to run the ePython in the directory with a .mpi_hostfile in it.
 
 ##Hello world
 
@@ -55,7 +55,7 @@ The extended ePython has been developed by Dongyu Liang on the basis of Dr. Nick
 
 ##Additional information for installing
 
-MPI is required. This version has been tested with the preinstalled Open MPI of the Parabuntu
+MPI is required. This version has been tested with the preinstalled Open MPI of the Parabuntu.
 
 If you do not install it then you can still run epython from the current directory, as ./epython.sh but ensure that epython-device.elf is in the current directory when you run the interpreter. The epython.sh script will detect whether to run as sudo (earlier versions of the parallella OS) or not (later versions.)
 
