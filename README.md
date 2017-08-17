@@ -69,4 +69,4 @@ For more information about installing ePython refer [here](docs/tutorial1.md), f
 
     Pass -d 16 argument to use the single Parallella board (master node)
     
-  Notice that Garbege collector has been disabled.
+  Notice that Garbage Collector has been disabled.
